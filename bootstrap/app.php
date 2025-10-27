@@ -19,29 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO
         );
         
-        // Stateless auth - check cookie BEFORE auth middleware
+        // Stateless auth for Vercel - run BEFORE auth middleware
         $middleware->web(prepend: [
-            function ($request, $next) {
-                // Check if auth cookie exists
-                $authCookie = $request->cookie('vercel_auth');
-                
-                if ($authCookie) {
-                    try {
-                        // Decrypt and get user ID
-                        $userId = \Illuminate\Support\Facades\Crypt::decryptString($authCookie);
-                        
-                        // Find user and login
-                        $user = \App\Models\User::find($userId);
-                        if ($user) {
-                            \Illuminate\Support\Facades\Auth::login($user);
-                        }
-                    } catch (\Exception $e) {
-                        // Invalid cookie, ignore
-                    }
-                }
-                
-                return $next($request);
-            }
+            \App\Http\Middleware\VercelStatelessAuth::class,
         ]);
         
         // Disable CSRF for all POST/PUT/DELETE routes
