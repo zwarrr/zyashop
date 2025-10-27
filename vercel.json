@@ -1,12 +1,12 @@
 
 {
     "version": 2,
-    "functions": {
-        "api/**/*.php": {
-            "runtime": "vercel-php@0.7.4",
-            "maxDuration": 30
+    "builds": [
+        {
+            "src": "api/index.php",
+            "use": "vercel-php@0.7.4"
         }
-    },
+    ],
     "routes": [
         {
             "src": "/storage/(.*)",
@@ -26,11 +26,7 @@
         },
         {
             "src": "/(.*)",
-            "dest": "api/index.php",
-            "headers": {
-                "X-Forwarded-Proto": "https",
-                "X-Forwarded-Host": "$host"
-            }
+            "dest": "api/index.php"
         }
     ]
 }

@@ -1,12 +1,9 @@
-/vendor
 /node_modules
-.env
-.env.local
 .git
-.gitignore
 .phpunit.result.cache
 *.log
 storage/logs/*.log
-storage/framework/cache/*
+storage/framework/cache/data/*
 storage/framework/sessions/*
 storage/framework/views/*
+tests/
