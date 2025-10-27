@@ -60,7 +60,7 @@ return [
     |
     */
 
-    'files' => storage_path('framework/sessions'),
+    'files' => env('APP_ENV') === 'production' ? '/tmp/sessions' : storage_path('framework/sessions'),
 
     /*
     |--------------------------------------------------------------------------
