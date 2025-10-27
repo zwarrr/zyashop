@@ -29,12 +29,7 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials, true)) {
             $request->session()->regenerate();
-            
-            // Set simple cookie with user ID (encrypted by Laravel automatically)
-            $userId = Auth::id();
-            
-            return redirect()->intended('/dashboard')
-                ->cookie('admin_token', $userId, 10080); // 7 days
+            return redirect()->intended('/dashboard');
         }
 
         return back()->withErrors([
@@ -50,29 +45,15 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/login')->cookie('admin_token', '', -1);
+        return redirect('/login');
     }
 
     /**
      * Show dashboard (protected route)
      */
-    public function dashboard(Request $request)
+    public function dashboard()
     {
-        // Check cookie first
-        $userId = $request->cookie('admin_token');
-        
-        if (!$userId) {
-            return redirect('/login');
-        }
-        
-        // Find and login user from cookie
-        $user = User::find($userId);
-        if (!$user) {
-            return redirect('/login')->cookie('admin_token', '', -1);
-        }
-        
-        // Auto login from cookie
-        Auth::login($user);
+        $user = auth()->user();
         
         // Get statistics
         $totalProducts = $user->products()->count();
