@@ -18,10 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO
         );
         
-        // Disable CSRF for admin routes
+        // Disable CSRF for all POST/PUT/DELETE routes
         $middleware->validateCsrfTokens(except: [
-            'admin/*',
-            'admin/login',
+            '*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
