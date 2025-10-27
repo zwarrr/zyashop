@@ -1,77 +1,66 @@
 # Zyashop - Deployment Guide
 
-## Vercel Deployment
+## Environment Configuration
 
-### Prerequisites
-- Vercel account
-- GitHub repository connected to Vercel
-- Filess.io MySQL database
+Project ini menggunakan **2 environment files** yang terpisah:
 
-### Environment Variables (Set di Vercel Dashboard)
-
-**PENTING:** Jangan lupa set environment variable `DB_PASSWORD` di Vercel Dashboard!
-
+### 1. **`.env`** - Localhost Development
 ```bash
-# Application
-APP_ENV=production
-APP_DEBUG=false
-APP_URL=https://zyashop.vercel.app
-APP_KEY=base64:TGaVaXwhWgjn9akhE4SCSIjGG/cQqvICUQ+PgLA3Bs0=
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=zyashop_db
+DB_USERNAME=root
+DB_PASSWORD=
+```
+File ini untuk development di localhost dengan MySQL lokal.
 
-# Cache
-APP_CONFIG_CACHE=/tmp/config.php
-APP_EVENTS_CACHE=/tmp/events.php
-APP_PACKAGES_CACHE=/tmp/packages.php
-APP_ROUTES_CACHE=/tmp/routes.php
-APP_SERVICES_CACHE=/tmp/services.php
-VIEW_COMPILED_PATH=/tmp
-CACHE_DRIVER=array
-
-# Logging
-LOG_CHANNEL=stderr
-
-# Session
-SESSION_DRIVER=cookie
-SESSION_LIFETIME=120
-SESSION_SECURE_COOKIE=true
-SESSION_SAME_SITE=lax
-
-# Security
-SANCTUM_STATEFUL_DOMAINS=zyashop.vercel.app,*.vercel.app
-
-# Storage
-FILESYSTEM_DISK=public
-
-# Queue
-QUEUE_CONNECTION=sync
-
-# Database (Filess.io)
-DB_CONNECTION=mysql
+### 2. **`.env.vercel`** - Vercel Production
+```bash
 DB_HOST=5h8j1o.h.filess.io
 DB_PORT=61002
 DB_DATABASE=ZyaShop_cattaskfog
 DB_USERNAME=ZyaShop_cattaskfog
-DB_PASSWORD=your_password_here  # SET THIS IN VERCEL DASHBOARD!
+DB_PASSWORD=a81b358b3b11eebbe3adce8c61e5454d546ac773
+```
+File ini akan otomatis di-copy ke `.env` saat build di Vercel.
+
+---
+
+## Vercel Deployment
+
+### How It Works
+
+1. **Push code ke GitHub** → Vercel auto-detect changes
+2. **Build process** → `vercel-build.sh` runs:
+   - Copy `.env.vercel` → `.env`
+   - Install composer dependencies
+   - Create /tmp directories
+3. **Deploy** → App runs with Filess.io database
+
+### Prerequisites
+- Vercel account connected to GitHub
+- Filess.io MySQL database (already configured in `.env.vercel`)
+
+---
+
+## Deployment Steps
+
+### 1. Push to GitHub
+
+```bash
+git add .
+git commit -m "Update: Separate env files for localhost and Vercel"
+git push origin main
 ```
 
-### Deployment Steps
+### 2. Vercel Auto-Deploy
+- Vercel detects push and starts build
+- Build script copies `.env.vercel` to `.env`
+- App deploys with production database
 
-1. **Push to GitHub:**
-   ```bash
-   git add .
-   git commit -m "Fix Vercel deployment configuration"
-   git push origin main
-   ```
-
-2. **Vercel akan otomatis deploy**
-   - Vercel akan detect perubahan di GitHub
-   - Build akan berjalan otomatis
-   - Jika error, cek logs di Vercel Dashboard
-
-3. **Set Environment Variables:**
-   - Buka Vercel Dashboard → Project Settings → Environment Variables
-   - Tambahkan variable `DB_PASSWORD` dengan value password database Filess.io
-   - Redeploy project
+### 3. Verify Deployment
+- Open: https://zyashop.vercel.app
+- Check logs di Vercel Dashboard jika ada error
 
 ### Troubleshooting Error 500
 

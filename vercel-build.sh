@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Copy .env.vercel to .env for production
+if [ -f ".env.vercel" ]; then
+    echo "Copying .env.vercel to .env..."
+    cp .env.vercel .env
+fi
+
 # Install Composer dependencies
 composer install --no-dev --optimize-autoloader --no-interaction
 

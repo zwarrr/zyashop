@@ -32,32 +32,5 @@
                 "X-Forwarded-Host": "$host"
             }
         }
-    ],
-    "env": {
-        "APP_ENV": "production",
-        "APP_DEBUG": "false",
-        "APP_URL": "https://zyashop.vercel.app",
-        "APP_KEY": "base64:TGaVaXwhWgjn9akhE4SCSIjGG/cQqvICUQ+PgLA3Bs0=",
-        "APP_CONFIG_CACHE": "/tmp/config.php",
-        "APP_EVENTS_CACHE": "/tmp/events.php",
-        "APP_PACKAGES_CACHE": "/tmp/packages.php",
-        "APP_ROUTES_CACHE": "/tmp/routes.php",
-        "APP_SERVICES_CACHE": "/tmp/services.php",
-        "VIEW_COMPILED_PATH": "/tmp",
-        "CACHE_DRIVER": "array",
-        "LOG_CHANNEL": "stderr",
-        "SESSION_DRIVER": "cookie",
-        "SESSION_LIFETIME": "120",
-        "SESSION_SECURE_COOKIE": "true",
-        "SESSION_SAME_SITE": "lax",
-        "SANCTUM_STATEFUL_DOMAINS": "zyashop.vercel.app,*.vercel.app",
-        "FILESYSTEM_DISK": "public",
-        "QUEUE_CONNECTION": "sync",
-        "DB_CONNECTION": "mysql",
-        "DB_HOST": "5h8j1o.h.filess.io",
-        "DB_PORT": "61002",
-        "DB_DATABASE": "ZyaShop_cattaskfog",
-        "DB_USERNAME": "ZyaShop_cattaskfog",
-        "DB_PASSWORD": ""
-    }
+    ]
 }
