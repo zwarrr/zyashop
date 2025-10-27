@@ -12,6 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
+        $middleware->trustHosts(at: ['*.vercel.app', 'zyashop.vercel.app']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
