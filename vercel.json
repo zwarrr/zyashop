@@ -31,6 +31,7 @@
         "CACHE_DRIVER": "array",
         "QUEUE_CONNECTION": "sync",
         "LOG_CHANNEL": "stderr",
+        "LOG_LEVEL": "error",
         "SESSION_DRIVER": "cookie",
         "SESSION_LIFETIME": "120",
         "DB_CONNECTION": "mysql",
@@ -38,6 +39,7 @@
         "DB_PORT": "61002",
         "DB_DATABASE": "ZyaShop_cattaskfog",
         "DB_USERNAME": "ZyaShop_cattaskfog",
-        "DB_PASSWORD": "a81b358b3b11eebbe3adce8c61e5454d546ac773"
+        "DB_PASSWORD": "a81b358b3b11eebbe3adce8c61e5454d546ac773",
+        "MYSQL_ATTR_SSL_CA": ""
     }
 }
