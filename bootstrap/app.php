@@ -12,11 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
-        $middleware->trustHosts(at: [
-            fn () => '.*\.vercel\.app',  // Regex pattern untuk semua subdomain vercel
-            'localhost',
-            '127.0.0.1'
-        ]);
+        // Disable TrustHosts for Vercel - allow all hosts
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
