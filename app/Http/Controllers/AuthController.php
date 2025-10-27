@@ -27,8 +27,17 @@ class AuthController extends Controller
             'password' => 'required|string|min:6',
         ]);
 
-        if (Auth::attempt($credentials)) {
+        if (Auth::attempt($credentials, true)) { // Remember me = true
             $request->session()->regenerate();
+            
+            // Force save session
+            $request->session()->put('auth', [
+                'user_id' => Auth::id(),
+                'logged_in' => true,
+                'time' => time()
+            ]);
+            $request->session()->save();
+            
             return redirect('/dashboard')->with('success', 'Login berhasil!');
         }
 
