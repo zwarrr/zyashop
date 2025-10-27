@@ -26,12 +26,12 @@ try {
         }
     }
     
-    // Vercel filesystem is read-only, so we load .env.vercel directly
-    $envVercel = __DIR__ . '/../.env.vercel';
+    // Load .env file directly (committed to repo)
+    $envFile = __DIR__ . '/../.env';
 
-    if (file_exists($envVercel)) {
-        // Parse .env.vercel and set environment variables
-        $lines = file($envVercel, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if (file_exists($envFile)) {
+        // Parse .env and set environment variables
+        $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         foreach ($lines as $line) {
             // Skip comments and empty lines
             $line = trim($line);
