@@ -2,7 +2,7 @@
     "version": 2,
     "functions": {
         "api/index.php": { 
-            "runtime": "vercel-php@0.6.0",
+            "runtime": "vercel-php@0.7.4",
             "maxDuration": 30
         }
     },
@@ -36,8 +36,11 @@
         "SESSION_LIFETIME": "10080",
         "SESSION_ENCRYPT": "false",
         "SESSION_PATH": "/",
-        "SESSION_SECURE_COOKIE": "true",
+        "SESSION_DOMAIN": "",
+        "SESSION_SECURE_COOKIE": "false",
         "SESSION_HTTP_ONLY": "true",
+        "SESSION_SAME_SITE": "lax",
+        "SESSION_COOKIE": "zyashop_session",
         "SANCTUM_STATEFUL_DOMAINS": "zyashop.vercel.app,localhost",
         "DB_CONNECTION": "mysql",
         "DB_HOST": "5h8j1o.h.filess.io",
