@@ -7,13 +7,12 @@
         }
     },
     "routes": [
-        { "src": "/css/(.*)", "dest": "/public/css/$1" },
-        { "src": "/js/(.*)", "dest": "/public/js/$1" },
-        { "src": "/img/(.*)", "dest": "/public/img/$1" },
-        { "src": "/storage/(.*)", "dest": "/storage/app/public/$1" },
-        { "src": "/build/(.*)", "dest": "/public/build/$1" },
+        { "src": "/build/(.*)", "dest": "/public/build/" },
         { "src": "/(.*)", "dest": "/api/index.php" }
     ],
+    "public": true,
+    "buildCommand": "vite build",
+    "outputDirectory": "public",
     "env": {
         "APP_NAME": "ZyaShop",
         "APP_ENV": "production",
