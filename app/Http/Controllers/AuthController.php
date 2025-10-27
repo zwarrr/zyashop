@@ -38,7 +38,8 @@ class AuthController extends Controller
             ]);
             $request->session()->save();
             
-            return redirect('/dashboard')->with('success', 'Login berhasil!');
+            // Langsung render dashboard, TANPA REDIRECT!
+            return $this->dashboard();
         }
 
         return back()->withErrors([
