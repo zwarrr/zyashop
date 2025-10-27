@@ -5,6 +5,39 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Artisan;
+
+Route::get('/migrate-fresh', function () {
+    try {
+        // Drop all tables
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        $tables = DB::select('SHOW TABLES');
+        foreach ($tables as $table) {
+            $tableName = array_values((array)$table)[0];
+            DB::statement("DROP TABLE IF EXISTS `{$tableName}`");
+        }
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        
+        // Run migrations
+        Artisan::call('migrate', ['--force' => true]);
+        
+        // Run seeders
+        Artisan::call('db:seed', ['--force' => true, '--class' => 'AdminSeeder']);
+        
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Database migrated and seeded successfully',
+            'migrate_output' => Artisan::output()
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage(),
+            'line' => $e->getLine(),
+            'file' => $e->getFile()
+        ], 500);
+    }
+});
 
 Route::get('/debug-session', function (Request $request) {
     return response()->json([
@@ -75,12 +108,14 @@ Route::get('/check-tables', function () {
         
         $hasSessionsTable = in_array('sessions', $tableList);
         $sessionCount = $hasSessionsTable ? DB::table('sessions')->count() : 0;
+        $userCount = in_array('users', $tableList) ? DB::table('users')->count() : 0;
         
         return response()->json([
             'status' => 'success',
             'all_tables' => $tableList,
             'has_sessions_table' => $hasSessionsTable,
-            'session_records' => $sessionCount
+            'session_records' => $sessionCount,
+            'user_count' => $userCount
         ]);
     } catch (\Exception $e) {
         return response()->json([
