@@ -73,20 +73,6 @@ class ProductController extends Controller
     }
 
     /**
-     * Tampilkan detail product single
-     */
-    public function show($id)
-    {
-        $product = Product::findOrFail($id);
-        $userProfile = $product->user->profile;
-        
-        return view('sections.product-detail', [
-            'product' => $product,
-            'userProfile' => $userProfile
-        ]);
-    }
-
-    /**
      * Tampilkan cards berdasarkan kategori (menggunakan product.blade template)
      */
     public function showCards($category)
@@ -164,10 +150,11 @@ class ProductController extends Controller
             return redirect()->route('home');
         }
 
-        // Filter products berdasarkan link yang ada
+        // Filter products berdasarkan link yang ada dan user
         $linkField = $type === 'shopee' ? 'link_shopee' : 'link_tiktok';
         
-        $products = Product::where('status', '!=', 'inactive')
+        $products = $user->products()
+                          ->where('status', '!=', 'inactive')
                           ->whereNotNull($linkField)
                           ->where($linkField, '!=', '')
                           ->get();

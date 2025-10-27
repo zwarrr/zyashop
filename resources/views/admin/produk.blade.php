@@ -52,6 +52,7 @@
   <!-- Include Modals -->
   @include('admin.partials.delete_confirmation_modal')
   @include('admin.partials.alert_modal')
+  @include('partials.ajax_loader')
 
   <!-- Wrapper -->
   <div class="flex min-h-screen">
@@ -214,11 +215,13 @@
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1.5">Link Shopee</label>
               <input type="url" id="productLinkShopee" name="link_shopee" class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-black" placeholder="https://shopee.co.id/...">
+              <p class="text-xs text-orange-600 mt-1">⚠️ Wajib diisi supaya produk bisa tampil</p>
             </div>
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1.5">Link Tiktok Shop</label>
               <input type="url" id="productLinkTiktok" name="link_tiktok" class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-black" placeholder="https://vt.tiktok.com/...">
+              <p class="text-xs text-orange-600 mt-1">⚠️ Wajib diisi supaya produk bisa tampil</p>
             </div>
           </div>
 
@@ -233,15 +236,36 @@
           <!-- Right Column - Image -->
           <div class="flex flex-col">
             <label class="block text-sm font-medium text-gray-700 mb-1.5">Gambar Produk (Opsional, Max 10MB)</label>
+            
+            <!-- Image Preview Container -->
             <div id="imagePreviewContainer" class="mb-2 hidden">
-              <div class="relative w-full aspect-square bg-gray-100 rounded border border-gray-300 overflow-hidden">
+              <div class="relative w-full aspect-square bg-gray-100 rounded border border-gray-300 overflow-hidden group">
                 <img id="imagePreview" src="" alt="Preview" class="w-full h-full object-contain">
                 <div class="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
                   Preview
                 </div>
+                <!-- Change/Remove Image Buttons -->
+                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <div class="flex gap-2">
+                    <button type="button" onclick="document.getElementById('productImage').click()" class="bg-white text-black px-4 py-2 rounded text-sm font-medium hover:bg-gray-200 transition">
+                      <svg class="inline-block w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                      </svg>
+                      Ganti
+                    </button>
+                    <button type="button" onclick="removeProductImage()" class="bg-red-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-red-700 transition">
+                      <svg class="inline-block w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                      Hapus
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="space-y-1.5">
+            
+            <!-- File Input - Hidden when preview shown -->
+            <div id="imageInputContainer" class="space-y-1.5">
               <input type="file" id="productImage" name="image" accept="image/*" onchange="previewProductImage(event)" class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-black">
               <p class="text-gray-500 text-xs">JPG, PNG, GIF (Opsional)</p>
             </div>
@@ -287,13 +311,34 @@
     function previewProductImage(event) {
       const file = event.target.files[0];
       if (file) {
+        // Validate file size (10MB = 10485760 bytes)
+        if (file.size > 10485760) {
+          closeProductModal();
+          setTimeout(() => {
+            showAlertModal('Validasi', 'Ukuran file tidak boleh lebih dari 10MB', 'warning', () => {
+              openProductModal(currentMode, document.getElementById('productId').value || null);
+            });
+          }, 300);
+          event.target.value = '';
+          return;
+        }
+
         const reader = new FileReader();
         reader.onload = function(e) {
           document.getElementById('imagePreview').src = e.target.result;
           document.getElementById('imagePreviewContainer').classList.remove('hidden');
+          document.getElementById('imageInputContainer').classList.add('hidden');
         };
         reader.readAsDataURL(file);
       }
+    }
+
+    // Remove product image preview
+    function removeProductImage() {
+      document.getElementById('imagePreview').src = '';
+      document.getElementById('imagePreviewContainer').classList.add('hidden');
+      document.getElementById('imageInputContainer').classList.remove('hidden');
+      document.getElementById('productImage').value = '';
     }
 
     function openProductModal(mode = 'create', productId = null) {
@@ -306,6 +351,7 @@
       document.getElementById('productId').value = '';
       document.getElementById('formMethod').value = 'POST';
       document.getElementById('imagePreviewContainer').classList.add('hidden');
+      document.getElementById('imageInputContainer').classList.remove('hidden');
       document.getElementById('imagePreview').src = '';
 
       if (mode === 'create') {
@@ -344,6 +390,7 @@
             if (data.product.image_url) {
               document.getElementById('imagePreview').src = data.product.image_url;
               document.getElementById('imagePreviewContainer').classList.remove('hidden');
+              document.getElementById('imageInputContainer').classList.add('hidden');
             }
           })
           .catch(error => {
@@ -366,6 +413,9 @@
       const modal = document.getElementById('productModal');
       modal.classList.add('hidden');
       modal.classList.remove('flex');
+      // Reset input container visibility
+      document.getElementById('imageInputContainer').classList.remove('hidden');
+      document.getElementById('imagePreviewContainer').classList.add('hidden');
     }
 
     function deleteProduct(productId) {
@@ -399,31 +449,6 @@
         }
       );
     }
-
-    // Image preview
-    document.getElementById('productImage').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        // Validate file size (10MB = 10485760 bytes)
-        if (file.size > 10485760) {
-          closeProductModal();
-          setTimeout(() => {
-            showAlertModal('Validasi', 'Ukuran file tidak boleh lebih dari 10MB', 'warning', () => {
-              openProductModal(currentMode, document.getElementById('productId').value || null);
-            });
-          }, 300);
-          e.target.value = '';
-          return;
-        }
-        
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          document.getElementById('imagePreview').src = event.target.result;
-          document.getElementById('imagePreviewContainer').classList.remove('hidden');
-        };
-        reader.readAsDataURL(file);
-      }
-    });
 
     document.getElementById('productForm').addEventListener('submit', async (e) => {
       e.preventDefault();

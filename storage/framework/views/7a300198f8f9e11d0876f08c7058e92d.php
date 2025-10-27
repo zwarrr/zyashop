@@ -49,6 +49,8 @@
 
 <body class="bg-gray-50 text-gray-800">
 
+  <?php echo $__env->make('partials.ajax_loader', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+
   <!-- Wrapper -->
   <div class="flex min-h-screen">
 

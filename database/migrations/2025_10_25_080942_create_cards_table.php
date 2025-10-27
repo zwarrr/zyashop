@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->string('category'); // Cards range: 001-250, 250-500, etc
-            $table->text('description')->nullable();
             $table->string('image')->nullable(); // Stored path for image
             $table->string('slug')->unique(); // For dynamic page URL
             $table->enum('status', ['active', 'inactive'])->default('active');

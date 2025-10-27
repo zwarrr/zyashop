@@ -142,6 +142,8 @@
 </head>
 <body class="bg-white text-black">
 
+  <?php echo $__env->make('partials.ajax_loader', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+
   <!-- Main Wrapper -->
   <main class="max-w-md mx-auto px-4 pt-4">
 

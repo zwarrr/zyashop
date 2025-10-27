@@ -36,6 +36,8 @@
 
 <body class="bg-gray-50 text-gray-800">
 
+  @include('partials.ajax_loader')
+
   <!-- Wrapper -->
   <div class="flex min-h-screen">
 

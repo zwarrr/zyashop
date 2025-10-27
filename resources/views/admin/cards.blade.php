@@ -44,6 +44,7 @@
   <!-- Include Modals -->
   @include('admin.partials.delete_confirmation_modal')
   @include('admin.partials.alert_modal')
+  @include('partials.ajax_loader')
 
   <!-- Wrapper -->
   <div class="flex min-h-screen">
@@ -124,7 +125,7 @@
         <input type="hidden" id="cardId" name="card_id">
         <input type="hidden" id="formMethod" name="_method" value="POST">
 
-        <div class="grid grid-cols-3 gap-4 h-full">
+        <div class="grid grid-cols-2 gap-4 h-full">
           <!-- Left Column -->
           <div class="space-y-3.5">
             <div>
@@ -148,25 +149,38 @@
             </div>
           </div>
 
-          <!-- Middle Column -->
-          <div class="space-y-3.5 flex flex-col">
-            <div class="flex-1 flex flex-col">
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Deskripsi</label>
-              <textarea id="cardDescription" name="description" class="w-full flex-1 px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none" placeholder="Deskripsi card..."></textarea>
-            </div>
-          </div>
-
           <!-- Right Column - Image -->
           <div class="flex flex-col">
             <label class="block text-sm font-medium text-gray-700 mb-1.5">Gambar (Opsional, 1080x1080, Max 10MB)</label>
+            
+            <!-- Image Preview Container -->
             <div id="imagePreviewContainer" class="mb-2 hidden">
-              <div class="relative w-full aspect-square bg-gray-100 rounded border border-gray-300 overflow-hidden">
+              <div class="relative w-full aspect-square bg-gray-100 rounded border border-gray-300 overflow-hidden group">
                 <img id="imagePreview" src="" alt="Preview" class="w-full h-full object-contain">
                 <div class="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
                   Preview
                 </div>
+                <!-- Change/Remove Image Buttons -->
+                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <div class="flex gap-2">
+                    <button type="button" onclick="document.getElementById('cardImage').click()" class="bg-white text-black px-4 py-2 rounded text-sm font-medium hover:bg-gray-200 transition">
+                      <svg class="inline-block w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                      </svg>
+                      Ganti
+                    </button>
+                    <button type="button" onclick="removeCardImage()" class="bg-red-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-red-700 transition">
+                      <svg class="inline-block w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                      Hapus
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
+            
+            <!-- File Input -->
             <div class="space-y-1.5">
               <input type="file" id="cardImage" name="image" accept="image/*" onchange="previewCardImage(event)" class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-black">
               <p class="text-gray-500 text-xs">JPG, PNG, GIF (1080x1080, Opsional)</p>
@@ -205,6 +219,13 @@
         };
         reader.readAsDataURL(file);
       }
+    }
+
+    // Remove card image preview
+    function removeCardImage() {
+      document.getElementById('imagePreview').src = '';
+      document.getElementById('imagePreviewContainer').classList.add('hidden');
+      document.getElementById('cardImage').value = '';
     }
 
     // Load categories from database and populate dropdown
@@ -367,7 +388,8 @@
       modal.classList.remove('hidden');
       modal.classList.add('flex');
       
-      // Load card data via AJAX
+      // Load card data via AJAX with loader
+      showAjaxLoader('Memuat Data', 'Mengambil data card...');
       fetch(`/cards/${cardId}/edit`, {
         headers: {
           'X-Requested-With': 'XMLHttpRequest',
@@ -381,7 +403,6 @@
         .then(data => {
           document.getElementById('cardTitle').value = data.card.title || '';
           document.getElementById('cardCategory').value = data.card.category || '';
-          document.getElementById('cardDescription').value = data.card.description || '';
           document.getElementById('cardStatus').value = data.card.status || 'active';
           
           // Show existing image if available
@@ -397,6 +418,7 @@
         })
         .finally(() => {
           // Restore button state
+          hideAjaxLoader();
           document.getElementById('submitBtn').disabled = false;
           document.getElementById('submitBtn').textContent = 'Update';
         });
@@ -409,6 +431,7 @@
           const formData = new FormData();
           formData.append('_method', 'DELETE');
           
+          showAjaxLoader('Menghapus Card', 'Sedang menghapus card...');
           fetch(`/cards/${cardId}`, {
             method: 'POST',
             headers: {
@@ -418,6 +441,7 @@
           })
           .then(response => response.json())
           .then(data => {
+            hideAjaxLoader();
             if (data.success) {
               showAlertModal('Berhasil', data.success || 'Card berhasil dihapus!', 'success', () => {
                 allCards = allCards.filter(c => c.id !== cardId);
@@ -428,6 +452,7 @@
             }
           })
           .catch(error => {
+            hideAjaxLoader();
             console.error('Error:', error);
             showAlertModal('Error', 'Terjadi kesalahan saat menghapus', 'error');
           });
@@ -473,6 +498,7 @@
       }
 
       try {
+        showAjaxLoader('Menyimpan Card', 'Sedang menyimpan data card...');
         const response = await fetch(url, {
           method: 'POST',
           headers: {
@@ -483,6 +509,7 @@
 
         const data = await response.json();
 
+        hideAjaxLoader();
         closeCardModal();
         
         setTimeout(() => {
@@ -504,6 +531,7 @@
           }
         }, 300);
       } catch (error) {
+        hideAjaxLoader();
         console.error('Error:', error);
         closeCardModal();
         setTimeout(() => {

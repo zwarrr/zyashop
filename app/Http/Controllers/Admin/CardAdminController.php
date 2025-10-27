@@ -28,7 +28,6 @@ class CardAdminController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'category' => 'required|string',
-            'description' => 'nullable|string',
             'status' => 'required|in:active,inactive',
             'image' => 'nullable|image|mimes:jpeg,png,gif|max:10240',
         ]);
@@ -41,7 +40,19 @@ class CardAdminController extends Controller
                 return response()->json(['error' => 'Gambar harus berukuran 1080x1080 pixel'], 422);
             }
             
-            $path = $image->store('cards', 'public');
+            // Generate custom filename: card-{slug}.{extension}
+            $slug = Str::slug($validated['title']);
+            $extension = $image->getClientOriginalExtension();
+            $filename = 'card-' . $slug . '.' . $extension;
+            
+            // Check if file exists, add counter if needed
+            $counter = 1;
+            while (\Storage::disk('public')->exists('cards/' . $filename)) {
+                $filename = 'card-' . $slug . '-' . $counter . '.' . $extension;
+                $counter++;
+            }
+            
+            $path = $image->storeAs('cards', $filename, 'public');
             $validated['image'] = $path;
         }
 
@@ -73,7 +84,6 @@ class CardAdminController extends Controller
                     'id' => $card->id,
                     'title' => $card->title,
                     'category' => $card->category,
-                    'description' => $card->description,
                     'status' => $card->status,
                     'image_url' => $card->image ? '/storage/' . $card->image : null,
                 ]
@@ -98,7 +108,6 @@ class CardAdminController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'category' => 'required|string',
-            'description' => 'nullable|string',
             'status' => 'required|in:active,inactive',
             'image' => 'nullable|image|mimes:jpeg,png,gif|max:10240',
         ]);
@@ -116,7 +125,19 @@ class CardAdminController extends Controller
                 \Storage::disk('public')->delete($card->image);
             }
             
-            $path = $image->store('cards', 'public');
+            // Generate custom filename: card-{slug}.{extension}
+            $slug = Str::slug($validated['title']);
+            $extension = $image->getClientOriginalExtension();
+            $filename = 'card-' . $slug . '.' . $extension;
+            
+            // Check if file exists, add counter if needed
+            $counter = 1;
+            while (\Storage::disk('public')->exists('cards/' . $filename) && $filename !== basename($card->image)) {
+                $filename = 'card-' . $slug . '-' . $counter . '.' . $extension;
+                $counter++;
+            }
+            
+            $path = $image->storeAs('cards', $filename, 'public');
             $validated['image'] = $path;
         }
 

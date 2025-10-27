@@ -74,15 +74,19 @@
       <?php else: ?>
         <!-- Product Item (from products table) -->
         <?php
+          // Tentukan link berdasarkan prioritas atau type
           $productLink = '#';
           if (isset($productType)) {
+            // Jika dari filter type (shopee/tiktok)
             $productLink = $productType === 'shopee' ? ($product->link_shopee ?? '#') : ($product->link_tiktok ?? '#');
           } else {
-            $productLink = route('product.show', $product->id);
+            // Default: gunakan link yang tersedia (prioritas shopee)
+            $productLink = $product->link_shopee ?? $product->link_tiktok ?? '#';
           }
         ?>
         <a href="<?php echo e($productLink); ?>" 
-           target="<?php echo e(isset($productType) ? '_blank' : '_self'); ?>"
+           target="_blank"
+           rel="noopener noreferrer"
            class="product-card rounded-lg overflow-hidden border border-gray-200 hover:border-black transition-colors" 
            data-product="<?php echo e($product->id); ?>">
           <div class="relative bg-gray-300 overflow-hidden" style="aspect-ratio: 1;">

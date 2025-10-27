@@ -36,6 +36,8 @@
 </head>
 <body class="bg-gray-50">
 
+@include('partials.ajax_loader')
+
 <!-- Include Bar -->
 @include('admin.bar')
 
@@ -204,6 +206,7 @@
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Profile Image (Max 5MB)</label>
             <input type="file" name="profile_image" id="profileImage" accept="image/*" 
+                   onchange="previewProfileImage(event)"
                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black">
             <p class="text-xs text-gray-500 mt-1">JPG, PNG, GIF</p>
           </div>
@@ -211,7 +214,27 @@
           <!-- Image Preview -->
           <div id="imagePreviewContainer" class="hidden">
             <label class="block text-sm font-medium text-gray-700 mb-2">Preview</label>
-            <img id="imagePreview" src="" alt="Preview" class="w-40 h-40 object-cover rounded-lg border-2 border-gray-200">
+            <div class="relative inline-block group">
+              <img id="imagePreview" src="" alt="Preview" class="w-40 h-40 object-cover rounded-lg border-2 border-gray-200">
+              
+              <!-- Change/Remove Image Buttons -->
+              <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 rounded-lg transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                <div class="flex flex-col gap-2">
+                  <button type="button" onclick="document.getElementById('profileImage').click()" class="bg-white text-black px-3 py-1.5 rounded text-xs font-medium hover:bg-gray-200 transition">
+                    <svg class="inline-block w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    Ganti
+                  </button>
+                  <button type="button" onclick="removeProfileImage()" class="bg-red-600 text-white px-3 py-1.5 rounded text-xs font-medium hover:bg-red-700 transition">
+                    <svg class="inline-block w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    Hapus
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -302,6 +325,26 @@
   function closeProfileModal() {
     document.getElementById('profileModal').classList.add('hidden');
     document.body.style.overflow = 'auto';
+  }
+
+  // Preview profile image
+  function previewProfileImage(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('imagePreview').src = e.target.result;
+        document.getElementById('imagePreviewContainer').classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  // Remove profile image preview
+  function removeProfileImage() {
+    document.getElementById('imagePreview').src = '';
+    document.getElementById('imagePreviewContainer').classList.add('hidden');
+    document.getElementById('profileImage').value = '';
   }
 
   // Link Modal Functions

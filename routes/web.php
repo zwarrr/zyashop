@@ -11,7 +11,6 @@ use App\Http\Controllers\Admin\ProfileAdminController;
 // User Routes - Public Pages
 Route::get('/', [ProductController::class, 'home'])->name('home');
 Route::get('/product', [ProductController::class, 'index'])->name('product');
-Route::get('/product/{id}', [ProductController::class, 'show'])->name('product.show');
 Route::get('/cards/{category}', [ProductController::class, 'showCards'])->name('cards.show');
 Route::get('/card/{cardId}/products', [ProductController::class, 'showProductsByCard'])->name('card.products');
 Route::get('/products/{type}', [ProductController::class, 'showProductsByType'])->name('products.type');

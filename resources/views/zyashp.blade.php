@@ -142,6 +142,8 @@
 </head>
 <body class="bg-white text-black">
 
+  @include('partials.ajax_loader')
+
   <!-- Main Wrapper -->
   <main class="max-w-md mx-auto px-4 pt-4">
 

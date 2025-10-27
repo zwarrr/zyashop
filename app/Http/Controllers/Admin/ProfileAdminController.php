@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\UserProfile;
 use App\Models\UserLink;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
 class ProfileAdminController extends Controller
@@ -53,14 +54,27 @@ class ProfileAdminController extends Controller
         $profile->bio = $validated['bio'];
         $profile->verified_badge = $validated['verified_badge'];
 
-        // Handle image upload
+        // Handle image upload with custom filename
         if ($request->hasFile('profile_image')) {
             // Delete old image if exists
             if ($profile->profile_image && Storage::disk('public')->exists(str_replace('/storage/', '', $profile->profile_image))) {
                 Storage::disk('public')->delete(str_replace('/storage/', '', $profile->profile_image));
             }
 
-            $path = $request->file('profile_image')->store('profiles', 'public');
+            $image = $request->file('profile_image');
+            $username = Str::slug($validated['username']);
+            $extension = $image->getClientOriginalExtension();
+            $filename = 'profile-' . $username . '.' . $extension;
+            
+            // Check if file exists, add counter if needed
+            $counter = 1;
+            $oldFilename = $profile->profile_image ? basename(str_replace('/storage/', '', $profile->profile_image)) : '';
+            while (Storage::disk('public')->exists('profiles/' . $filename) && $filename !== $oldFilename) {
+                $filename = 'profile-' . $username . '-' . $counter . '.' . $extension;
+                $counter++;
+            }
+            
+            $path = $image->storeAs('profiles', $filename, 'public');
             $profile->profile_image = '/storage/' . $path;
         }
 

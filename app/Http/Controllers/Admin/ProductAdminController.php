@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Card;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ProductAdminController extends Controller
@@ -63,11 +64,30 @@ class ProductAdminController extends Controller
             'link_tiktok' => 'nullable|url',
         ]);
 
+        // Validasi: Minimal salah satu link harus diisi
+        if (empty($validated['link_shopee']) && empty($validated['link_tiktok'])) {
+            return response()->json([
+                'error' => 'Minimal salah satu link (Shopee atau Tiktok) harus diisi!'
+            ], 422);
+        }
+
         $validated['user_id'] = auth()->id();
         
-        // Handle image upload
+        // Handle image upload with custom filename
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('products', 'public');
+            $image = $request->file('image');
+            $slug = Str::slug($validated['title']);
+            $extension = $image->getClientOriginalExtension();
+            $filename = 'product-' . $slug . '.' . $extension;
+            
+            // Check if file exists, add counter if needed
+            $counter = 1;
+            while (\Storage::disk('public')->exists('products/' . $filename)) {
+                $filename = 'product-' . $slug . '-' . $counter . '.' . $extension;
+                $counter++;
+            }
+            
+            $path = $image->storeAs('products', $filename, 'public');
             $validated['image_url'] = '/storage/' . $path;
         }
         
@@ -140,9 +160,35 @@ class ProductAdminController extends Controller
             'link_tiktok' => 'nullable|url',
         ]);
 
-        // Handle image upload
+        // Validasi: Minimal salah satu link harus diisi
+        if (empty($validated['link_shopee']) && empty($validated['link_tiktok'])) {
+            return response()->json([
+                'error' => 'Minimal salah satu link (Shopee atau Tiktok) harus diisi!'
+            ], 422);
+        }
+
+        // Handle image upload with custom filename
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('products', 'public');
+            // Delete old image if exists
+            if ($product->image_url) {
+                $oldPath = str_replace('/storage/', '', $product->image_url);
+                \Storage::disk('public')->delete($oldPath);
+            }
+            
+            $image = $request->file('image');
+            $slug = Str::slug($validated['title']);
+            $extension = $image->getClientOriginalExtension();
+            $filename = 'product-' . $slug . '.' . $extension;
+            
+            // Check if file exists, add counter if needed
+            $counter = 1;
+            $oldFilename = $product->image_url ? basename(str_replace('/storage/', '', $product->image_url)) : '';
+            while (\Storage::disk('public')->exists('products/' . $filename) && $filename !== $oldFilename) {
+                $filename = 'product-' . $slug . '-' . $counter . '.' . $extension;
+                $counter++;
+            }
+            
+            $path = $image->storeAs('products', $filename, 'public');
             $validated['image_url'] = '/storage/' . $path;
         }
 
