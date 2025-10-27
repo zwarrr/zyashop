@@ -19,6 +19,11 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO
         );
         
+        // Add stateless auth middleware for Vercel
+        $middleware->web(append: [
+            \App\Http\Middleware\StatelessAuth::class,
+        ]);
+        
         // Disable CSRF for all POST/PUT/DELETE routes
         $middleware->validateCsrfTokens(except: [
             '*',
