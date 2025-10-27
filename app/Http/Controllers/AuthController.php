@@ -27,23 +27,9 @@ class AuthController extends Controller
             'password' => 'required|string|min:6',
         ]);
 
-        if (Auth::attempt($credentials, true)) { // Remember me = true
+        if (Auth::attempt($credentials, true)) {
             $request->session()->regenerate();
-            
-            // Force save session
-            $request->session()->put('auth', [
-                'user_id' => Auth::id(),
-                'logged_in' => true,
-                'time' => time()
-            ]);
-            $request->session()->save();
-            
-            // Set custom encrypted cookie for stateless auth in Vercel
-            $encryptedUserId = \Illuminate\Support\Facades\Crypt::encryptString(Auth::id());
-            
-            return redirect('/dashboard')
-                ->with('success', 'Login berhasil!')
-                ->cookie('vercel_auth', $encryptedUserId, 10080, '/', null, true, true); // 7 days, HttpOnly, Secure
+            return redirect()->intended('/dashboard');
         }
 
         return back()->withErrors([
@@ -59,11 +45,7 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        
-        // Delete custom auth cookie
-        return redirect('/login')
-            ->with('success', 'Logout berhasil!')
-            ->cookie('vercel_auth', '', -1); // Delete cookie
+        return redirect('/login');
     }
 
     /**
