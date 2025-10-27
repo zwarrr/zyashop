@@ -7,3 +7,5 @@ storage/framework/cache/data/*
 storage/framework/sessions/*
 storage/framework/views/*
 tests/
+.env.local
+.env.*.local
