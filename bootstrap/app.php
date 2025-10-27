@@ -17,6 +17,12 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Request::HEADER_X_FORWARDED_PORT |
             \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO
         );
+        
+        // Disable CSRF for admin routes
+        $middleware->validateCsrfTokens(except: [
+            'admin/*',
+            'admin/login',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
