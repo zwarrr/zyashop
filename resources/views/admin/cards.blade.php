@@ -190,8 +190,9 @@
   <script>
     feather.replace();
 
-    // Load cards from database
+    // Load cards and categories from database
     let allCards = @json($cards ?? []);
+    const allCategories = @json($categories ?? []);
 
     // Preview image when file selected
     function previewCardImage(event) {
@@ -206,13 +207,12 @@
       }
     }
 
-    // Load categories from localStorage and populate dropdown
+    // Load categories from database and populate dropdown
     function populateCategoryDropdown() {
-      const categories = JSON.parse(localStorage.getItem('categories')) || [];
       const categorySelect = document.getElementById('cardCategory');
       
       // Get unique card ranges from categories
-      const uniqueCards = [...new Set(categories.map(cat => cat.cards))];
+      const uniqueCards = [...new Set(allCategories.map(cat => cat.cards))].filter(card => card);
       
       categorySelect.innerHTML = '<option value="">Pilih Cards</option>';
       uniqueCards.forEach(card => {
