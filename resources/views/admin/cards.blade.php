@@ -211,8 +211,12 @@
     function populateCategoryDropdown() {
       const categorySelect = document.getElementById('cardCategory');
       
+      console.log('All Categories:', allCategories); // Debug log
+      
       // Get unique card ranges from categories
       const uniqueCards = [...new Set(allCategories.map(cat => cat.cards))].filter(card => card);
+      
+      console.log('Unique Cards:', uniqueCards); // Debug log
       
       categorySelect.innerHTML = '<option value="">Pilih Cards</option>';
       uniqueCards.forEach(card => {
@@ -221,6 +225,8 @@
         option.textContent = card;
         categorySelect.appendChild(option);
       });
+      
+      console.log('Category dropdown populated with', uniqueCards.length, 'options'); // Debug log
     }
 
     // Render cards table
@@ -331,6 +337,9 @@
       document.getElementById('imagePreview').src = '';
       document.getElementById('modalTitle').textContent = 'Tambah Card';
       document.getElementById('submitBtn').textContent = 'Simpan';
+
+      // Populate category dropdown setiap kali modal dibuka
+      populateCategoryDropdown();
 
       modal.classList.remove('hidden');
       modal.classList.add('flex');
