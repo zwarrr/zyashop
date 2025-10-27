@@ -4,12 +4,35 @@
  * Vercel Serverless Function Entry Point
  */
 
-// Check if .env exists, if not copy from .env.vercel
-$envFile = __DIR__ . '/../.env';
+// Vercel filesystem is read-only, so we load .env.vercel directly
 $envVercel = __DIR__ . '/../.env.vercel';
 
-if (!file_exists($envFile) && file_exists($envVercel)) {
-    copy($envVercel, $envFile);
+if (file_exists($envVercel)) {
+    // Parse .env.vercel and set environment variables
+    $lines = file($envVercel, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        // Skip comments
+        if (strpos(trim($line), '#') === 0) {
+            continue;
+        }
+        
+        // Parse KEY=VALUE
+        if (strpos($line, '=') !== false) {
+            list($key, $value) = explode('=', $line, 2);
+            $key = trim($key);
+            $value = trim($value);
+            
+            // Remove quotes if present
+            $value = trim($value, '"\'');
+            
+            // Set environment variable
+            if (!empty($key)) {
+                putenv("$key=$value");
+                $_ENV[$key] = $value;
+                $_SERVER[$key] = $value;
+            }
+        }
+    }
 }
 
 // Load Laravel application
