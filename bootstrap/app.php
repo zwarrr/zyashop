@@ -18,9 +18,14 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO
         );
         
-        // Allow Vercel domains for CSRF
-        $middleware->validateCsrfTokens(except: [
-            // Add any routes that should be excluded from CSRF verification
+        // Use custom CSRF middleware
+        $middleware->use([
+            \App\Http\Middleware\VerifyCsrfToken::class,
+        ]);
+        
+        // Encrypt cookies
+        $middleware->encryptCookies(except: [
+            'XSRF-TOKEN',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
