@@ -1,5 +1,6 @@
 {
     "version": 2,
+    "buildCommand": "composer install --no-dev --optimize-autoloader && php artisan migrate --force",
     "functions": {
         "api/index.php": { 
             "runtime": "vercel-php@0.7.4",
@@ -32,7 +33,7 @@
         "QUEUE_CONNECTION": "sync",
         "LOG_CHANNEL": "stderr",
         "LOG_LEVEL": "error",
-        "SESSION_DRIVER": "cookie",
+        "SESSION_DRIVER": "database",
         "SESSION_LIFETIME": "120",
         "SESSION_ENCRYPT": "false",
         "SESSION_DOMAIN": "",
