@@ -17,16 +17,6 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Request::HEADER_X_FORWARDED_PORT |
             \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO
         );
-        
-        // Use custom CSRF middleware
-        $middleware->use([
-            \App\Http\Middleware\VerifyCsrfToken::class,
-        ]);
-        
-        // Encrypt cookies
-        $middleware->encryptCookies(except: [
-            'XSRF-TOKEN',
-        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
