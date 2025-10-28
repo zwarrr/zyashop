@@ -110,35 +110,34 @@ class CardAdminController extends Controller
                     'tmp_size' => filesize($image->path())
                 ]);
                 
-                // Read file content and write directly (more reliable than move on Vercel)
-                $imageContent = file_get_contents($image->path());
-                if ($imageContent === false) {
-                    \Log::error('Store - Failed to read uploaded file');
-                    return response()->json(['error' => 'Gagal membaca file gambar'], 500);
-                }
+                // Use Laravel Storage facade - most reliable for Vercel
+                $storagePath = 'cards/' . $filename;
+                $success = \Storage::disk('public')->put($storagePath, file_get_contents($image->getRealPath()));
                 
-                $bytesWritten = file_put_contents($finalPath, $imageContent);
-                if ($bytesWritten === false || $bytesWritten === 0) {
-                    \Log::error('Store - Failed to write file', ['bytes' => $bytesWritten]);
+                if (!$success) {
+                    \Log::error('Store - Failed to save via Storage facade');
                     return response()->json(['error' => 'Gagal menyimpan file gambar'], 500);
                 }
                 
-                $path = 'cards/' . $filename;
-                $fileSize = filesize($finalPath);
+                // Verify file exists and has content
+                if (!\Storage::disk('public')->exists($storagePath)) {
+                    \Log::error('Store - File does not exist after save');
+                    return response()->json(['error' => 'File tidak tersimpan'], 500);
+                }
                 
+                $fileSize = \Storage::disk('public')->size($storagePath);
                 \Log::info('Store - Image saved successfully', [
-                    'path' => $path,
-                    'full_path' => $finalPath,
-                    'bytes_written' => $bytesWritten,
-                    'final_size' => $fileSize
+                    'path' => $storagePath,
+                    'size' => $fileSize
                 ]);
                 
                 if ($fileSize === 0) {
                     \Log::error('Store - WARNING: File size is 0 after save!');
+                    \Storage::disk('public')->delete($storagePath);
                     return response()->json(['error' => 'File tersimpan tapi kosong'], 500);
                 }
                 
-                $validated['image'] = $path;
+                $validated['image'] = $storagePath;
             } else {
                 \Log::info('Store - No image file in request');
             }
@@ -270,35 +269,34 @@ class CardAdminController extends Controller
                 'tmp_size' => filesize($image->path())
             ]);
             
-            // Read file content and write directly (more reliable than move on Vercel)
-            $imageContent = file_get_contents($image->path());
-            if ($imageContent === false) {
-                \Log::error('Update - Failed to read uploaded file');
-                return response()->json(['error' => 'Gagal membaca file gambar'], 500);
-            }
+            // Use Laravel Storage facade - most reliable for Vercel
+            $storagePath = 'cards/' . $filename;
+            $success = \Storage::disk('public')->put($storagePath, file_get_contents($image->getRealPath()));
             
-            $bytesWritten = file_put_contents($finalPath, $imageContent);
-            if ($bytesWritten === false || $bytesWritten === 0) {
-                \Log::error('Update - Failed to write file', ['bytes' => $bytesWritten]);
+            if (!$success) {
+                \Log::error('Update - Failed to save via Storage facade');
                 return response()->json(['error' => 'Gagal menyimpan file gambar'], 500);
             }
             
-            $path = 'cards/' . $filename;
-            $fileSize = filesize($finalPath);
+            // Verify file exists and has content
+            if (!\Storage::disk('public')->exists($storagePath)) {
+                \Log::error('Update - File does not exist after save');
+                return response()->json(['error' => 'File tidak tersimpan'], 500);
+            }
             
+            $fileSize = \Storage::disk('public')->size($storagePath);
             \Log::info('Update - Image saved successfully', [
-                'path' => $path,
-                'full_path' => $finalPath,
-                'bytes_written' => $bytesWritten,
-                'final_size' => $fileSize
+                'path' => $storagePath,
+                'size' => $fileSize
             ]);
             
             if ($fileSize === 0) {
                 \Log::error('Update - WARNING: File size is 0 after save!');
+                \Storage::disk('public')->delete($storagePath);
                 return response()->json(['error' => 'File tersimpan tapi kosong'], 500);
             }
             
-            $validated['image'] = $path;
+            $validated['image'] = $storagePath;
         } else {
             \Log::info('Update - No image file in request');
         }
