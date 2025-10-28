@@ -8,14 +8,7 @@ use App\Http\Controllers\Admin\KategoriAdminController;
 use App\Http\Controllers\Admin\CardAdminController;
 use App\Http\Controllers\Admin\ProfileAdminController;
 
-// User Routes - Public Pages
-Route::get('/', [ProductController::class, 'home'])->name('home');
-Route::get('/product', [ProductController::class, 'index'])->name('product');
-Route::get('/cards/{category}', [ProductController::class, 'showCards'])->name('cards.show');
-Route::get('/card/{cardId}/products', [ProductController::class, 'showProductsByCard'])->name('card.products');
-Route::get('/products/{type}', [ProductController::class, 'showProductsByType'])->name('products.type');
-
-// Image Serving Route - Support both with/without subfolder
+// Image Serving Route - MUST BE FIRST! Support both with/without subfolder
 Route::get('/storage/{path}', function ($path) {
     $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
     
@@ -48,6 +41,37 @@ Route::get('/storage/{path}', function ($path) {
         'Cache-Control' => 'public, max-age=31536000',
     ]);
 })->where('path', '.*');
+
+// User Routes - Public Pages
+Route::get('/', [ProductController::class, 'home'])->name('home');
+Route::get('/product', [ProductController::class, 'index'])->name('product');
+Route::get('/cards/{category}', [ProductController::class, 'showCards'])->name('cards.show');
+Route::get('/card/{cardId}/products', [ProductController::class, 'showProductsByCard'])->name('card.products');
+Route::get('/products/{type}', [ProductController::class, 'showProductsByType'])->name('products.type');
+
+// Clear cache route (for debugging)
+Route::get('/clear-cache', function () {
+    \Artisan::call('cache:clear');
+    \Artisan::call('config:clear');
+    \Artisan::call('view:clear');
+    
+    // Delete route cache file manually
+    $routeCachePath = '/tmp/routes.php';
+    if (file_exists($routeCachePath)) {
+        unlink($routeCachePath);
+    }
+    
+    return response()->json([
+        'success' => true,
+        'message' => 'All caches cleared!',
+        'cleared' => [
+            'cache' => true,
+            'config' => true,
+            'views' => true,
+            'routes' => file_exists($routeCachePath) ? false : true
+        ]
+    ]);
+});
 
 // Fix database image paths (run once)
 Route::get('/fix-image-paths', function () {
