@@ -7,6 +7,8 @@
         }
     },
     "routes": [
+        { "src": "/storage/cards/(.*)", "dest": "/storage/$1" },
+        { "src": "/storage/products/(.*)", "dest": "/storage/$1" },
         { "src": "/storage/(.*)", "dest": "/public/storage/$1" },
         { "src": "/build/(.*)", "dest": "/public/build/$1" },
         { "src": "/img/(.*)", "dest": "/public/img/$1" },
