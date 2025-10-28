@@ -21,8 +21,18 @@ Route::get('/storage/{path}', function ($path) {
     $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
     $storagePath = $basePath . '/' . $path;
     
+    // Debug logging
+    \Log::info('Storage request', [
+        'path' => $path,
+        'basePath' => $basePath,
+        'fullPath' => $storagePath,
+        'exists' => file_exists($storagePath),
+        'listDir' => is_dir(dirname($storagePath)) ? scandir(dirname($storagePath)) : 'not a dir'
+    ]);
+    
     if (!file_exists($storagePath)) {
-        abort(404);
+        // Return 404 image or placeholder
+        abort(404, 'Image not found: ' . $storagePath);
     }
     
     $mimeType = mime_content_type($storagePath);
@@ -46,6 +56,13 @@ Route::get('/test-storage', function () {
         'cards_dir_exists' => file_exists($basePath . '/cards'),
         'tmp_writable' => is_writable('/tmp'),
     ];
+    
+    // List files in cards directory
+    if (file_exists($basePath . '/cards')) {
+        $results['cards_files'] = scandir($basePath . '/cards');
+    } else {
+        $results['cards_files'] = [];
+    }
     
     // Try create test file
     try {

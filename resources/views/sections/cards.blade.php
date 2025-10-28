@@ -72,6 +72,7 @@
             src="{{ $card->image ? asset('storage/' . $card->image) : 'https://placehold.co/1080x1080?text=' . urlencode($card->title) }}" 
             alt="{{ $card->title }}" 
             class="w-full h-full object-cover"
+            onerror="this.onerror=null; this.src='https://placehold.co/1080x1080?text={{ urlencode($card->title) }}';"
           >
           <div class="absolute top-2 right-2 bg-black text-white px-2 sm:px-3 py-1 rounded-full text-xs font-semibold">
             {{ $card->status === 'active' ? 'Tersedia' : 'Tidak Tersedia' }}
