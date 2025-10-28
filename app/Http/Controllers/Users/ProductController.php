@@ -39,7 +39,16 @@ class ProductController extends Controller
                      ->with(['products' => function($query) {
                          $query->where('status', '!=', 'inactive');
                      }])
-                     ->get();
+                     ->get()
+                     ->map(function($card) {
+                         // Add image_url for each card - use API route if base64
+                         if ($card->image && strpos($card->image, 'data:') === 0) {
+                             $card->image_url = route('card.image', ['id' => $card->id]);
+                         } else if ($card->image) {
+                             $card->image_url = asset('storage/' . $card->image);
+                         }
+                         return $card;
+                     });
         
         return view('zyashp', [
             'userProfile' => $userProfile,

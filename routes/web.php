@@ -15,28 +15,36 @@ Route::get('/cards/{category}', [ProductController::class, 'showCards'])->name('
 Route::get('/card/{cardId}/products', [ProductController::class, 'showProductsByCard'])->name('card.products');
 Route::get('/products/{type}', [ProductController::class, 'showProductsByType'])->name('products.type');
 
-// Serve card images as base64 data
-Route::get('/card-image/{id}', function ($id) {
+// Card Image Route - Serve base64 images as proper image response
+Route::get('/api/card-image/{id}', function (Illuminate\Http\Request $request, $id) {
     $card = \App\Models\Card::find($id);
     
     if (!$card || !$card->image) {
-        return response()->noContent(404);
+        return response()->file(public_path('img/placeholder.png'));
     }
     
-    // If it's already a data URL, return it as-is
+    // If it's a data URL, parse and return the image
     if (strpos($card->image, 'data:') === 0) {
-        // Extract the MIME type and base64 data
-        if (preg_match('/^data:([^;]+);base64,(.+)$/', $card->image, $matches)) {
-            $mimeType = $matches[1];
-            $imageData = base64_decode($matches[2]);
-            
-            return response($imageData)
-                ->header('Content-Type', $mimeType)
-                ->header('Cache-Control', 'public, max-age=31536000');
+        try {
+            preg_match('/data:image\/(\w+);base64,(.+)/', $card->image, $matches);
+            if (isset($matches[2])) {
+                $mimeType = 'image/' . $matches[1];
+                $imageData = base64_decode($matches[2], true);
+                
+                if ($imageData === false) {
+                    return response()->file(public_path('img/placeholder.png'));
+                }
+                
+                return response($imageData)
+                    ->header('Content-Type', $mimeType)
+                    ->header('Cache-Control', 'public, max-age=31536000');
+            }
+        } catch (\Exception $e) {
+            return response()->file(public_path('img/placeholder.png'));
         }
     }
     
-    return response()->noContent(404);
+    return response()->file(public_path('img/placeholder.png'));
 })->name('card.image');
 
 // Auth Routes
