@@ -31,5 +31,21 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Force JSON response for AJAX requests
+        $exceptions->respond(function ($response, $exception, $request) {
+            if ($request->expectsJson() || $request->ajax() || $request->is('cards') || $request->is('produk')) {
+                if ($exception instanceof \Illuminate\Validation\ValidationException) {
+                    return response()->json([
+                        'error' => 'Validasi gagal',
+                        'errors' => $exception->errors()
+                    ], 422);
+                }
+                
+                return response()->json([
+                    'error' => $exception->getMessage() ?: 'Terjadi kesalahan server'
+                ], 500);
+            }
+            
+            return $response;
+        });
     })->create();

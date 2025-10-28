@@ -26,12 +26,20 @@ class CardAdminController extends Controller
     public function store(Request $request)
     {
         try {
-            $validated = $request->validate([
-                'title' => 'required|string|max:255',
-                'category' => 'required|string',
-                'status' => 'required|in:active,inactive',
-                'image' => 'nullable|image|mimes:jpeg,png,gif|max:10240',
-            ]);
+            // Validate request
+            try {
+                $validated = $request->validate([
+                    'title' => 'required|string|max:255',
+                    'category' => 'required|string',
+                    'status' => 'required|in:active,inactive',
+                    'image' => 'nullable|image|mimes:jpeg,png,gif|max:10240',
+                ]);
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                return response()->json([
+                    'error' => 'Validasi gagal',
+                    'errors' => $e->errors()
+                ], 422);
+            }
 
             // Validate image dimensions (1080x1080) if image provided
             if ($request->hasFile('image')) {
@@ -80,11 +88,6 @@ class CardAdminController extends Controller
                 'card' => $cardData
             ], 201);
             
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'error' => 'Validasi gagal',
-                'errors' => $e->errors()
-            ], 422);
         } catch (\Exception $e) {
             \Log::error('Card store error: ' . $e->getMessage());
             return response()->json([
