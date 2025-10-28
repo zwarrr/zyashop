@@ -100,14 +100,13 @@ class ProductAdminController extends Controller
                 $base64Image = base64_encode($imageContent);
                 $mimeType = $image->getMimeType();
                 
-                $validated['image_url'] = 'data:' . $mimeType . ';base64,' . $base64Image;
+                $validated['image'] = 'data:' . $mimeType . ';base64,' . $base64Image;
                 
                 \Log::info('Store - Product image converted to base64', [
-                    'base64_length' => strlen($validated['image_url']),
+                    'base64_length' => strlen($validated['image']),
                     'mime_type' => $mimeType
                 ]);
             }
-            
             $product = Product::create($validated);
             
             // Return product data with image_url (already base64 if uploaded)
@@ -217,10 +216,10 @@ class ProductAdminController extends Controller
             $base64Image = base64_encode($imageContent);
             $mimeType = $image->getMimeType();
             
-            $validated['image_url'] = 'data:' . $mimeType . ';base64,' . $base64Image;
+            $validated['image'] = 'data:' . $mimeType . ';base64,' . $base64Image;
             
             \Log::info('Update - Product image converted to base64', [
-                'base64_length' => strlen($validated['image_url']),
+                'base64_length' => strlen($validated['image']),
                 'mime_type' => $mimeType
             ]);
         }

@@ -14,7 +14,7 @@ class Product extends Model
         'card_id',
         'title',
         'description',
-        'image_url',
+        'image',
         'link_shopee',
         'link_tiktok',
         'price',
@@ -23,6 +23,30 @@ class Product extends Model
         'status',
         'specifications'
     ];
+
+    protected $appends = ['image_url'];
+
+    /**
+     * Get the full URL for the product image.
+     */
+    public function getImageUrlAttribute()
+    {
+        if (!$this->image) {
+            return null;
+        }
+        
+        // If image is already base64 data, return it directly
+        if (str_starts_with($this->image, 'data:image/')) {
+            return $this->image;
+        }
+        
+        // If image path already starts with 'products/', use it as is
+        $imagePath = str_starts_with($this->image, 'products/') 
+            ? $this->image 
+            : 'products/' . $this->image;
+        
+        return asset('storage/' . $imagePath);
+    }
 
     /**
      * Relationship: Product belongs to User
