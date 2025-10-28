@@ -52,12 +52,20 @@ class CardAdminController extends Controller
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
                 
+                \Log::info('Store - Image upload detected', [
+                    'original_name' => $image->getClientOriginalName(),
+                    'size' => $image->getSize(),
+                    'mime' => $image->getMimeType()
+                ]);
+                
                 // Check if image is valid
                 if (!$image->isValid()) {
                     return response()->json(['error' => 'File gambar tidak valid'], 422);
                 }
                 
                 $dimensions = getimagesize($image->path());
+                \Log::info('Store - Image dimensions', ['width' => $dimensions[0], 'height' => $dimensions[1]]);
+                
                 if ($dimensions[0] != 1080 || $dimensions[1] != 1080) {
                     return response()->json(['error' => 'Gambar harus berukuran 1080x1080 pixel'], 422);
                 }
@@ -66,6 +74,7 @@ class CardAdminController extends Controller
                 $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
                 $cardsDir = $basePath . '/cards';
                 if (!file_exists($cardsDir)) {
+                    \Log::info('Store - Creating cards directory', ['path' => $cardsDir]);
                     if (!mkdir($cardsDir, 0755, true)) {
                         return response()->json(['error' => 'Tidak dapat membuat direktori untuk menyimpan gambar'], 500);
                     }
@@ -83,8 +92,28 @@ class CardAdminController extends Controller
                     $counter++;
                 }
                 
+                \Log::info('Store - Storing image', ['filename' => $filename, 'disk' => 'public']);
                 $path = $image->storeAs('cards', $filename, 'public');
+                
+                // Verify file was stored and get actual size
+                $fullPath = $basePath . '/' . $path;
+                $fileSize = file_exists($fullPath) ? filesize($fullPath) : 0;
+                
+                \Log::info('Store - Image stored result', [
+                    'path' => $path,
+                    'full_path' => $fullPath,
+                    'exists' => file_exists($fullPath),
+                    'size' => $fileSize,
+                    'original_size' => $image->getSize()
+                ]);
+                
+                if ($fileSize === 0 && file_exists($fullPath)) {
+                    \Log::error('Store - File exists but is EMPTY!');
+                }
+                
                 $validated['image'] = $path; // Store as "cards/filename.ext"
+            } else {
+                \Log::info('Store - No image file in request');
             }
 
             // Generate slug from title
@@ -162,7 +191,16 @@ class CardAdminController extends Controller
         // Handle image upload
         if ($request->hasFile('image')) {
             $image = $request->file('image');
+            
+            \Log::info('Update - Image upload detected', [
+                'original_name' => $image->getClientOriginalName(),
+                'size' => $image->getSize(),
+                'mime' => $image->getMimeType()
+            ]);
+            
             $dimensions = getimagesize($image->path());
+            \Log::info('Update - Image dimensions', ['width' => $dimensions[0], 'height' => $dimensions[1]]);
+            
             if ($dimensions[0] != 1080 || $dimensions[1] != 1080) {
                 return response()->json(['error' => 'Gambar harus berukuran 1080x1080 pixel'], 422);
             }
@@ -170,6 +208,7 @@ class CardAdminController extends Controller
             // Delete old image
             if ($card->image) {
                 \Storage::disk('public')->delete($card->image);
+                \Log::info('Update - Deleted old image', ['path' => $card->image]);
             }
             
             // Generate custom filename: card-{slug}.{extension}
@@ -184,8 +223,13 @@ class CardAdminController extends Controller
                 $counter++;
             }
             
+            \Log::info('Update - Storing image', ['filename' => $filename]);
             $path = $image->storeAs('cards', $filename, 'public');
+            \Log::info('Update - Image stored', ['path' => $path, 'size' => filesize(storage_path('app/public/' . $path))]);
+            
             $validated['image'] = $path;
+        } else {
+            \Log::info('Update - No image file in request');
         }
 
         // Update slug if title changed
