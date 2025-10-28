@@ -37,20 +37,20 @@ class AuthController extends Controller
                 'expires' => now()->addDays(7)->timestamp
             ]);
             
-            cookie()->queue(cookie(
+            $request->session()->regenerate();
+            
+            // Return redirect with cookie attached
+            return redirect()->intended('/dashboard')->cookie(
                 'zyashop_auth', 
                 $authData, 
-                10080, // 7 days
+                10080, // 7 days in minutes
                 '/',
                 null,
-                false, // secure
+                false, // secure (set true for production HTTPS)
                 true, // httpOnly
                 false, // raw
                 'lax' // sameSite
-            ));
-            
-            $request->session()->regenerate();
-            return redirect()->intended('/dashboard');
+            );
         }
 
         return back()->withErrors([
@@ -64,13 +64,11 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         Auth::logout();
-        
-        // Clear stateless auth cookie
-        cookie()->queue(cookie()->forget('zyashop_auth'));
-        
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/login');
+        
+        // Clear stateless auth cookie and redirect
+        return redirect('/login')->withCookie(cookie()->forget('zyashop_auth'));
     }
 
     /**

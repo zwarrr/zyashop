@@ -14,15 +14,10 @@ class VercelAuthMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        // First check standard Laravel session auth
-        if (Auth::check()) {
-            return $next($request);
-        }
-        
-        // Fallback: Check stateless cookie auth for Vercel
+        // Check stateless cookie auth for Vercel
         $authCookie = $request->cookie('zyashop_auth');
         
-        if ($authCookie) {
+        if ($authCookie && !Auth::check()) {
             try {
                 $authData = decrypt($authCookie);
                 
@@ -32,8 +27,7 @@ class VercelAuthMiddleware
                     $user = User::find($authData['user_id']);
                     
                     if ($user && $user->email === $authData['email']) {
-                        Auth::login($user);
-                        return $next($request);
+                        Auth::loginUsingId($user->id);
                     }
                 }
             } catch (\Exception $e) {
@@ -41,7 +35,11 @@ class VercelAuthMiddleware
             }
         }
         
-        // Not authenticated
-        return redirect()->route('login');
+        // Check if authenticated after cookie check
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+        
+        return $next($request);
     }
 }
