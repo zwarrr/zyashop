@@ -124,18 +124,18 @@ class ProductAdminController extends Controller
             return response()->json([
                 'success' => 'Produk berhasil ditambahkan!',
                 'product' => $productData
-            ], 200);
+            ], 200)->header('Content-Type', 'application/json');
             
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'error' => 'Validasi gagal',
                 'errors' => $e->errors()
-            ], 422);
+            ], 422)->header('Content-Type', 'application/json');
         } catch (\Exception $e) {
             \Log::error('Product store error: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Terjadi kesalahan: ' . $e->getMessage()
-            ], 500);
+            ], 500)->header('Content-Type', 'application/json');
         }
     }
 
@@ -237,7 +237,8 @@ class ProductAdminController extends Controller
 
         $product->update($validated);
 
-        return response()->json(['success' => 'Produk berhasil diperbarui!'], 200);
+        return response()->json(['success' => 'Produk berhasil diperbarui!'], 200)
+            ->header('Content-Type', 'application/json');
     }
 
     /**
@@ -249,7 +250,9 @@ class ProductAdminController extends Controller
         
         $product->delete();
 
-        return response()->json(['success' => 'Produk berhasil dihapus!'], 200);
+        return response()->json(['success' => 'Produk berhasil dihapus!'], 200)
+            ->header('Content-Type', 'application/json');
     }
 }
+
 

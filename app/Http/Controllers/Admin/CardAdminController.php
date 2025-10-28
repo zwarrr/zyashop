@@ -102,13 +102,13 @@ class CardAdminController extends Controller
             return response()->json([
                 'success' => 'Card berhasil ditambahkan', 
                 'card' => $cardData
-            ], 201);
+            ], 201)->header('Content-Type', 'application/json');
             
         } catch (\Exception $e) {
             \Log::error('Card store error: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Terjadi kesalahan: ' . $e->getMessage()
-            ], 500);
+            ], 500)->header('Content-Type', 'application/json');
         }
     }
 
@@ -201,7 +201,8 @@ class CardAdminController extends Controller
             $cardData['image_url'] = asset('storage/' . $card->image);
         }
 
-        return response()->json(['success' => 'Card berhasil diperbarui', 'card' => $cardData]);
+        return response()->json(['success' => 'Card berhasil diperbarui', 'card' => $cardData])
+            ->header('Content-Type', 'application/json');
     }
 
     /**
@@ -218,6 +219,7 @@ class CardAdminController extends Controller
 
         $card->delete();
 
-        return response()->json(['success' => 'Card berhasil dihapus']);
+        return response()->json(['success' => 'Card berhasil dihapus'])
+            ->header('Content-Type', 'application/json');
     }
 }
