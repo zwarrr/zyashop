@@ -191,6 +191,15 @@ class ProductAdminController extends Controller
         if ($product->user_id !== auth()->id()) {
             abort(403, 'Unauthorized action.');
         }
+        
+        // Debug: Log semua data yang diterima
+        \Log::info('Update - Request received', [
+            'product_id' => $id,
+            'has_file' => $request->hasFile('image'),
+            'all_files' => $request->allFiles(),
+            'all_input' => $request->except(['image']),
+            'content_type' => $request->header('Content-Type')
+        ]);
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
