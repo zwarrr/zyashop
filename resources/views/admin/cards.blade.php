@@ -507,6 +507,16 @@
       const cardId = document.getElementById('cardId').value;
       const formData = new FormData(document.getElementById('cardForm'));
       
+      // Debug: Log file being sent
+      if (formData.has('image')) {
+        const imageFile = formData.get('image');
+        console.log('📁 File to upload:', {
+          name: imageFile.name,
+          size: imageFile.size,
+          type: imageFile.type
+        });
+      }
+      
       let url = '/cards';
 
       if (cardId) {
@@ -535,6 +545,11 @@
         try {
           data = JSON.parse(responseText);
           console.log('✅ Parsed JSON successfully:', data);
+          
+          // 🔴 IF ERROR, LOG IT PROMINENTLY
+          if (data.error) {
+            console.error('🔴 UPLOAD ERROR FROM SERVER:', data.error);
+          }
         } catch (parseError) {
           console.error('❌ Failed to parse JSON:', parseError);
           console.error('Response was:', responseText.substring(0, 500));
@@ -559,6 +574,7 @@
               renderCardsTable();
             });
           } else {
+            console.error('❌ SERVER ERROR:', data.error);
             showAlertModal('Error', data.error || 'Terjadi kesalahan', 'error');
           }
         }, 300);
