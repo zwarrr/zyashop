@@ -458,10 +458,20 @@
       
       const formData = new FormData(document.getElementById('productForm'));
       
+      // Debug: Log form data
+      console.log('Form submit - Product ID:', productId);
+      console.log('Form submit - Mode:', currentMode);
+      console.log('Form submit - Has image file:', formData.get('image') ? 'YES' : 'NO');
+      if (formData.get('image')) {
+        console.log('Form submit - Image file:', formData.get('image'));
+      }
+      
       if (currentMode === 'edit' && productId) {
         url = `/produk/${productId}`;
         formData.append('_method', 'PUT');
       }
+      
+      console.log('Form submit - URL:', url);
       
       try {
         const response = await fetch(url, {
@@ -469,9 +479,13 @@
           headers: {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
             'Accept': 'application/json',
+            // JANGAN set Content-Type! Biar browser auto-set dengan boundary untuk multipart/form-data
           },
           body: formData
         });
+        
+        console.log('Form submit - Response status:', response.status);
+        console.log('Form submit - Response OK:', response.ok);
 
         closeProductModal();
         
@@ -481,15 +495,16 @@
               location.reload();
             });
           } else {
-            const errors = await response.json();
-            showAlertModal('Error', errors.message || 'Terjadi kesalahan', 'error');
+            const errorData = await response.json();
+            console.error('Form submit - Error response:', errorData);
+            showAlertModal('Error', errorData.error || errorData.message || 'Terjadi kesalahan', 'error');
           }
         }, 300);
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Form submit - Catch error:', error);
         closeProductModal();
         setTimeout(() => {
-          showAlertModal('Error', 'Terjadi kesalahan saat menyimpan produk', 'error');
+          showAlertModal('Error', 'Terjadi kesalahan saat menyimpan produk: ' + error.message, 'error');
         }, 300);
       }
     });
