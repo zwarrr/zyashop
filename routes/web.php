@@ -15,6 +15,21 @@ Route::get('/cards/{category}', [ProductController::class, 'showCards'])->name('
 Route::get('/card/{cardId}/products', [ProductController::class, 'showProductsByCard'])->name('card.products');
 Route::get('/products/{type}', [ProductController::class, 'showProductsByType'])->name('products.type');
 
+// Image Serving Route - Compatible with Vercel (no symlink needed)
+Route::get('/storage/{path}', function ($path) {
+    $storagePath = storage_path('app/public/' . $path);
+    
+    if (!file_exists($storagePath)) {
+        abort(404);
+    }
+    
+    $mimeType = mime_content_type($storagePath);
+    return response()->file($storagePath, [
+        'Content-Type' => $mimeType,
+        'Cache-Control' => 'public, max-age=31536000',
+    ]);
+})->where('path', '.*')->name('storage.serve');
+
 // Auth Routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');

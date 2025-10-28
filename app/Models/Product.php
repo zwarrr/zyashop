@@ -25,6 +25,24 @@ class Product extends Model
     ];
 
     /**
+     * Get the full URL for the product image.
+     */
+    public function getImageUrlAttribute($value)
+    {
+        if (!$value) {
+            return null;
+        }
+        
+        // If already full URL, return as is
+        if (str_starts_with($value, 'http') || str_starts_with($value, '/storage')) {
+            return $value;
+        }
+        
+        // Otherwise, prepend /storage/
+        return asset('storage/' . $value);
+    }
+
+    /**
      * Relationship: Product belongs to User
      */
     public function user()

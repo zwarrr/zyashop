@@ -69,7 +69,7 @@
       <div class="card-item rounded-lg overflow-hidden border border-gray-200 hover:border-black transition-colors" data-card="{{ $card->id }}">
         <div class="relative bg-gray-300 overflow-hidden" style="aspect-ratio: 1;">
           <img 
-            src="{{ $card->image ? asset('storage/cards/' . $card->image) : 'https://placehold.co/1080x1080?text=' . urlencode($card->title) }}" 
+            src="{{ $card->image ? asset('storage/' . $card->image) : 'https://placehold.co/1080x1080?text=' . urlencode($card->title) }}" 
             alt="{{ $card->title }}" 
             class="w-full h-full object-cover"
           >

@@ -54,46 +54,74 @@ class ProductAdminController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'card_id' => 'required|exists:cards,id',
-            'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
-            'status' => 'required|in:active,inactive,coming_soon',
-            'link_shopee' => 'nullable|url',
-            'link_tiktok' => 'nullable|url',
-        ]);
+        try {
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'card_id' => 'required|exists:cards,id',
+                'description' => 'nullable|string',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
+                'status' => 'required|in:active,inactive,coming_soon',
+                'link_shopee' => 'nullable|url',
+                'link_tiktok' => 'nullable|url',
+            ]);
 
-        // Validasi: Minimal salah satu link harus diisi
-        if (empty($validated['link_shopee']) && empty($validated['link_tiktok'])) {
-            return response()->json([
-                'error' => 'Minimal salah satu link (Shopee atau Tiktok) harus diisi!'
-            ], 422);
-        }
+            // Validasi: Minimal salah satu link harus diisi
+            if (empty($validated['link_shopee']) && empty($validated['link_tiktok'])) {
+                return response()->json([
+                    'error' => 'Minimal salah satu link (Shopee atau Tiktok) harus diisi!'
+                ], 422);
+            }
 
-        $validated['user_id'] = auth()->id();
-        
-        // Handle image upload with custom filename
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $slug = Str::slug($validated['title']);
-            $extension = $image->getClientOriginalExtension();
-            $filename = 'product-' . $slug . '.' . $extension;
+            $validated['user_id'] = auth()->id();
             
-            // Check if file exists, add counter if needed
-            $counter = 1;
-            while (\Storage::disk('public')->exists('products/' . $filename)) {
-                $filename = 'product-' . $slug . '-' . $counter . '.' . $extension;
-                $counter++;
+            // Handle image upload with custom filename
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                
+                // Check if image is valid
+                if (!$image->isValid()) {
+                    return response()->json(['error' => 'File gambar tidak valid'], 422);
+                }
+                
+                $slug = Str::slug($validated['title']);
+                $extension = $image->getClientOriginalExtension();
+                $filename = 'product-' . $slug . '.' . $extension;
+                
+                // Check if file exists, add counter if needed
+                $counter = 1;
+                while (\Storage::disk('public')->exists('products/' . $filename)) {
+                    $filename = 'product-' . $slug . '-' . $counter . '.' . $extension;
+                    $counter++;
+                }
+                
+                $path = $image->storeAs('products', $filename, 'public');
+                $validated['image_url'] = $path; // Store as "products/filename.ext"
             }
             
-            $path = $image->storeAs('products', $filename, 'public');
-            $validated['image_url'] = '/storage/' . $path;
-        }
-        
-        Product::create($validated);
+            $product = Product::create($validated);
+            
+            // Add full image URL to response
+            $productData = $product->toArray();
+            if ($product->image_url) {
+                $productData['image_url_full'] = asset('storage/' . $product->image_url);
+            }
 
-        return response()->json(['success' => 'Produk berhasil ditambahkan!'], 200);
+            return response()->json([
+                'success' => 'Produk berhasil ditambahkan!',
+                'product' => $productData
+            ], 200);
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'error' => 'Validasi gagal',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Product store error: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

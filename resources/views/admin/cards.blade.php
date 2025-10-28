@@ -266,7 +266,8 @@
       }
 
       tbody.innerHTML = allCards.map(card => {
-        const imageSrc = card.image ? `/storage/${card.image.startsWith('cards/') ? card.image : 'cards/' + card.image}` : '';
+        // Handle image path - already includes 'cards/' prefix from database
+        const imageSrc = card.image ? `/storage/${card.image}` : '';
         return `
         <tr class="hover:bg-gray-50 transition duration-200 card-row" data-title="${card.title}" data-status="${card.status}">
           <td class="px-6 py-4">
@@ -502,10 +503,17 @@
         const response = await fetch(url, {
           method: 'POST',
           headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
           },
           body: formData
         });
+
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('Server tidak mengembalikan JSON response');
+        }
 
         const data = await response.json();
 
@@ -535,7 +543,7 @@
         console.error('Error:', error);
         closeCardModal();
         setTimeout(() => {
-          showAlertModal('Error', 'Terjadi kesalahan saat menyimpan card', 'error');
+          showAlertModal('Error', error.message || 'Terjadi kesalahan saat menyimpan card', 'error');
         }, 300);
       }
     });

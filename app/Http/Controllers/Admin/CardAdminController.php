@@ -25,44 +25,72 @@ class CardAdminController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'category' => 'required|string',
-            'status' => 'required|in:active,inactive',
-            'image' => 'nullable|image|mimes:jpeg,png,gif|max:10240',
-        ]);
+        try {
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'category' => 'required|string',
+                'status' => 'required|in:active,inactive',
+                'image' => 'nullable|image|mimes:jpeg,png,gif|max:10240',
+            ]);
 
-        // Validate image dimensions (1080x1080) if image provided
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $dimensions = getimagesize($image->path());
-            if ($dimensions[0] != 1080 || $dimensions[1] != 1080) {
-                return response()->json(['error' => 'Gambar harus berukuran 1080x1080 pixel'], 422);
+            // Validate image dimensions (1080x1080) if image provided
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                
+                // Check if image is valid
+                if (!$image->isValid()) {
+                    return response()->json(['error' => 'File gambar tidak valid'], 422);
+                }
+                
+                $dimensions = getimagesize($image->path());
+                if ($dimensions[0] != 1080 || $dimensions[1] != 1080) {
+                    return response()->json(['error' => 'Gambar harus berukuran 1080x1080 pixel'], 422);
+                }
+                
+                // Generate custom filename: card-{slug}.{extension}
+                $slug = Str::slug($validated['title']);
+                $extension = $image->getClientOriginalExtension();
+                $filename = 'card-' . $slug . '.' . $extension;
+                
+                // Check if file exists, add counter if needed
+                $counter = 1;
+                while (\Storage::disk('public')->exists('cards/' . $filename)) {
+                    $filename = 'card-' . $slug . '-' . $counter . '.' . $extension;
+                    $counter++;
+                }
+                
+                $path = $image->storeAs('cards', $filename, 'public');
+                $validated['image'] = $path; // Store as "cards/filename.ext"
             }
+
+            // Generate slug from title
+            $validated['slug'] = Str::slug($validated['title']) . '-' . uniqid();
+            $validated['user_id'] = auth()->id();
+
+            $card = Card::create($validated);
             
-            // Generate custom filename: card-{slug}.{extension}
-            $slug = Str::slug($validated['title']);
-            $extension = $image->getClientOriginalExtension();
-            $filename = 'card-' . $slug . '.' . $extension;
-            
-            // Check if file exists, add counter if needed
-            $counter = 1;
-            while (\Storage::disk('public')->exists('cards/' . $filename)) {
-                $filename = 'card-' . $slug . '-' . $counter . '.' . $extension;
-                $counter++;
+            // Add image URL to response
+            $cardData = $card->toArray();
+            if ($card->image) {
+                $cardData['image_url'] = asset('storage/' . $card->image);
             }
+
+            return response()->json([
+                'success' => 'Card berhasil ditambahkan', 
+                'card' => $cardData
+            ], 201);
             
-            $path = $image->storeAs('cards', $filename, 'public');
-            $validated['image'] = $path;
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'error' => 'Validasi gagal',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Card store error: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Generate slug from title
-        $validated['slug'] = Str::slug($validated['title']) . '-' . uniqid();
-        $validated['user_id'] = auth()->id();
-
-        $card = Card::create($validated);
-
-        return response()->json(['success' => 'Card berhasil ditambahkan', 'card' => $card], 201);
     }
 
     /**
@@ -147,8 +175,14 @@ class CardAdminController extends Controller
         }
 
         $card->update($validated);
+        
+        // Add image URL to response
+        $cardData = $card->fresh()->toArray();
+        if ($card->image) {
+            $cardData['image_url'] = asset('storage/' . $card->image);
+        }
 
-        return response()->json(['success' => 'Card berhasil diperbarui', 'card' => $card]);
+        return response()->json(['success' => 'Card berhasil diperbarui', 'card' => $cardData]);
     }
 
     /**
