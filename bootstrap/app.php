@@ -23,6 +23,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             '*',
         ]);
+        
+        // Register custom Vercel auth middleware
+        $middleware->alias([
+            'vercel.auth' => \App\Http\Middleware\VercelAuthMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

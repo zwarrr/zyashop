@@ -28,6 +28,27 @@ class AuthController extends Controller
         ]);
 
         if (Auth::attempt($credentials, true)) {
+            $user = Auth::user();
+            
+            // Create a stateless auth cookie
+            $authData = encrypt([
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'expires' => now()->addDays(7)->timestamp
+            ]);
+            
+            cookie()->queue(cookie(
+                'zyashop_auth', 
+                $authData, 
+                10080, // 7 days
+                '/',
+                null,
+                false, // secure
+                true, // httpOnly
+                false, // raw
+                'lax' // sameSite
+            ));
+            
             $request->session()->regenerate();
             return redirect()->intended('/dashboard');
         }
@@ -43,6 +64,10 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         Auth::logout();
+        
+        // Clear stateless auth cookie
+        cookie()->queue(cookie()->forget('zyashop_auth'));
+        
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect('/login');

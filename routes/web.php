@@ -21,8 +21,8 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 });
 
-// Admin Routes - Authenticated Users
-Route::middleware('auth')->group(function () {
+// Admin Routes - Authenticated Users  
+Route::middleware('vercel.auth')->group(function () {
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
     
     // Admin Product Management
