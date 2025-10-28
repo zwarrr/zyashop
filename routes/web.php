@@ -73,6 +73,32 @@ Route::get('/clear-cache', function () {
     ]);
 });
 
+// Test: Create dummy image to verify storage works
+Route::get('/test-image', function () {
+    $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
+    
+    // Ensure directory exists
+    if (!is_dir($basePath)) {
+        mkdir($basePath, 0777, true);
+    }
+    
+    // Create a simple test image (1x1 red pixel PNG)
+    $img = imagecreate(100, 100);
+    $red = imagecolorallocate($img, 255, 0, 0);
+    
+    $testFile = $basePath . '/test-image.png';
+    imagepng($img, $testFile);
+    imagedestroy($img);
+    
+    return response()->json([
+        'success' => true,
+        'file_created' => file_exists($testFile),
+        'file_size' => filesize($testFile),
+        'test_url' => asset('storage/test-image.png'),
+        'direct_url' => url('/storage/test-image.png')
+    ]);
+});
+
 // Fix database image paths (run once)
 Route::get('/fix-image-paths', function () {
     $updated = \DB::table('cards')
