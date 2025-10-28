@@ -511,8 +511,14 @@
 
         // Check if response is JSON
         const contentType = response.headers.get('content-type');
+        console.log('Response status:', response.status);
+        console.log('Content-Type:', contentType);
+        
         if (!contentType || !contentType.includes('application/json')) {
-          throw new Error('Server tidak mengembalikan JSON response');
+          // Get response text for debugging
+          const responseText = await response.text();
+          console.error('Non-JSON response:', responseText.substring(0, 500));
+          throw new Error('Server tidak mengembalikan JSON response. Status: ' + response.status);
         }
 
         const data = await response.json();

@@ -79,10 +79,7 @@ Route::middleware('skip.auth.production')->group(function () {
     // Admin Product Management
     Route::get('/produk', [ProductAdminController::class, 'index'])->name('produk');
     Route::get('/produk/create', [ProductAdminController::class, 'create'])->name('produk.create');
-    Route::post('/produk', [ProductAdminController::class, 'store'])->name('produk.store');
     Route::get('/produk/{id}/edit', [ProductAdminController::class, 'edit'])->name('produk.edit');
-    Route::put('/produk/{id}', [ProductAdminController::class, 'update'])->name('produk.update');
-    Route::delete('/produk/{id}', [ProductAdminController::class, 'destroy'])->name('produk.destroy');
     
     // Legacy laporan route
     Route::get('/laporan', function () {
@@ -98,10 +95,15 @@ Route::middleware('skip.auth.production')->group(function () {
     
     // Cards Admin Management
     Route::get('/cards', [CardAdminController::class, 'index'])->name('cards');
-    Route::post('/cards', [CardAdminController::class, 'store'])->name('cards.store');
+    Route::post('/cards', [CardAdminController::class, 'store'])->middleware('force.json')->name('cards.store');
     Route::get('/cards/{id}/edit', [CardAdminController::class, 'edit'])->name('cards.edit');
-    Route::put('/cards/{id}', [CardAdminController::class, 'update'])->name('cards.update');
-    Route::delete('/cards/{id}', [CardAdminController::class, 'destroy'])->name('cards.destroy');
+    Route::put('/cards/{id}', [CardAdminController::class, 'update'])->middleware('force.json')->name('cards.update');
+    Route::delete('/cards/{id}', [CardAdminController::class, 'destroy'])->middleware('force.json')->name('cards.destroy');
+    
+    // Admin Product Management (POST/PUT/DELETE with force.json)
+    Route::post('/produk', [ProductAdminController::class, 'store'])->middleware('force.json')->name('produk.store');
+    Route::put('/produk/{id}', [ProductAdminController::class, 'update'])->middleware('force.json')->name('produk.update');
+    Route::delete('/produk/{id}', [ProductAdminController::class, 'destroy'])->middleware('force.json')->name('produk.destroy');
     
     // Profile Admin Management
     Route::get('/profile', [ProfileAdminController::class, 'index'])->name('profile');
