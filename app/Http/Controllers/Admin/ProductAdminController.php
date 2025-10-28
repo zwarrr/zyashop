@@ -80,46 +80,38 @@ class ProductAdminController extends Controller
 
             $validated['user_id'] = auth()->id();
             
-            // Handle image upload with custom filename
+            // Handle image upload - store as base64 for Vercel compatibility
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
+                
+                \Log::info('Store - Product image upload detected', [
+                    'original_name' => $image->getClientOriginalName(),
+                    'size' => $image->getSize(),
+                    'mime' => $image->getMimeType()
+                ]);
                 
                 // Check if image is valid
                 if (!$image->isValid()) {
                     return response()->json(['error' => 'File gambar tidak valid'], 422);
                 }
                 
-                // Ensure products directory exists - use /tmp in production
-                $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
-                $productsDir = $basePath . '/products';
-                if (!file_exists($productsDir)) {
-                    if (!mkdir($productsDir, 0755, true)) {
-                        return response()->json(['error' => 'Tidak dapat membuat direktori untuk menyimpan gambar'], 500);
-                    }
-                }
+                // Store image in base64 format in database for Vercel compatibility
+                $imageContent = file_get_contents($image->getRealPath());
+                $base64Image = base64_encode($imageContent);
+                $mimeType = $image->getMimeType();
                 
-                $slug = Str::slug($validated['title']);
-                $extension = $image->getClientOriginalExtension();
-                $filename = 'product-' . $slug . '.' . $extension;
+                $validated['image_url'] = 'data:' . $mimeType . ';base64,' . $base64Image;
                 
-                // Check if file exists, add counter if needed
-                $counter = 1;
-                while (\Storage::disk('public')->exists('products/' . $filename)) {
-                    $filename = 'product-' . $slug . '-' . $counter . '.' . $extension;
-                    $counter++;
-                }
-                
-                $path = $image->storeAs('products', $filename, 'public');
-                $validated['image_url'] = $path; // Store as "products/filename.ext"
+                \Log::info('Store - Product image converted to base64', [
+                    'base64_length' => strlen($validated['image_url']),
+                    'mime_type' => $mimeType
+                ]);
             }
             
             $product = Product::create($validated);
             
-            // Add full image URL to response
+            // Return product data with image_url (already base64 if uploaded)
             $productData = $product->toArray();
-            if ($product->image_url) {
-                $productData['image_url_full'] = asset('storage/' . $product->image_url);
-            }
 
             return response()->json([
                 'success' => 'Produk berhasil ditambahkan!',
@@ -212,27 +204,25 @@ class ProductAdminController extends Controller
 
         // Handle image upload with custom filename
         if ($request->hasFile('image')) {
-            // Delete old image if exists
-            if ($product->image_url) {
-                $oldPath = str_replace('/storage/', '', $product->image_url);
-                \Storage::disk('public')->delete($oldPath);
-            }
-            
             $image = $request->file('image');
-            $slug = Str::slug($validated['title']);
-            $extension = $image->getClientOriginalExtension();
-            $filename = 'product-' . $slug . '.' . $extension;
             
-            // Check if file exists, add counter if needed
-            $counter = 1;
-            $oldFilename = $product->image_url ? basename(str_replace('/storage/', '', $product->image_url)) : '';
-            while (\Storage::disk('public')->exists('products/' . $filename) && $filename !== $oldFilename) {
-                $filename = 'product-' . $slug . '-' . $counter . '.' . $extension;
-                $counter++;
-            }
+            \Log::info('Update - Product image upload detected', [
+                'original_name' => $image->getClientOriginalName(),
+                'size' => $image->getSize(),
+                'mime' => $image->getMimeType()
+            ]);
             
-            $path = $image->storeAs('products', $filename, 'public');
-            $validated['image_url'] = '/storage/' . $path;
+            // Store image in base64 format in database for Vercel compatibility
+            $imageContent = file_get_contents($image->getRealPath());
+            $base64Image = base64_encode($imageContent);
+            $mimeType = $image->getMimeType();
+            
+            $validated['image_url'] = 'data:' . $mimeType . ';base64,' . $base64Image;
+            
+            \Log::info('Update - Product image converted to base64', [
+                'base64_length' => strlen($validated['image_url']),
+                'mime_type' => $mimeType
+            ]);
         }
 
         $product->update($validated);
