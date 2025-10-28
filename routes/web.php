@@ -8,123 +8,12 @@ use App\Http\Controllers\Admin\KategoriAdminController;
 use App\Http\Controllers\Admin\CardAdminController;
 use App\Http\Controllers\Admin\ProfileAdminController;
 
-// Check writable paths
-Route::get('/check-paths', function () {
-    $paths = [
-        '/tmp' => is_writable('/tmp'),
-        '/tmp/storage' => is_dir('/tmp/storage') && is_writable('/tmp/storage'),
-        'public/storage' => is_writable(base_path('public/storage')),
-        'storage_path' => is_writable(storage_path()),
-    ];
-    
-    return response()->json($paths);
-});
-
-// Image Serving Route - MUST BE FIRST! Serve from /tmp/storage
-Route::get('/storage/{path}', function ($path) {
-    // Always serve from /tmp in production, storage in local
-    $basePath = '/tmp/storage';
-    $filePath = $basePath . '/' . $path;
-    
-    // If not found locally and in production, return 404
-    if (!file_exists($filePath)) {
-        // Try without subfolder if path has it
-        if (strpos($path, '/') !== false) {
-            $filename = basename($path);
-            $filePath = $basePath . '/' . $filename;
-        }
-    }
-    
-    if (!file_exists($filePath)) {
-        return response()->json(['error' => 'File not found: ' . $path], 404);
-    }
-    
-    $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-    $mimeTypes = [
-        'jpg' => 'image/jpeg',
-        'jpeg' => 'image/jpeg',
-        'png' => 'image/png',
-        'gif' => 'image/gif',
-        'webp' => 'image/webp',
-    ];
-    
-    $mimeType = $mimeTypes[$extension] ?? 'application/octet-stream';
-    
-    return response()->file($filePath, [
-        'Content-Type' => $mimeType,
-        'Cache-Control' => 'public, max-age=31536000',
-    ]);
-})->where('path', '.*');
-
 // User Routes - Public Pages
 Route::get('/', [ProductController::class, 'home'])->name('home');
 Route::get('/product', [ProductController::class, 'index'])->name('product');
 Route::get('/cards/{category}', [ProductController::class, 'showCards'])->name('cards.show');
 Route::get('/card/{cardId}/products', [ProductController::class, 'showProductsByCard'])->name('card.products');
 Route::get('/products/{type}', [ProductController::class, 'showProductsByType'])->name('products.type');
-
-// Clear cache route (for debugging)
-Route::get('/clear-cache', function () {
-    \Artisan::call('cache:clear');
-    \Artisan::call('config:clear');
-    \Artisan::call('view:clear');
-    
-    // Delete route cache file manually
-    $routeCachePath = '/tmp/routes.php';
-    if (file_exists($routeCachePath)) {
-        unlink($routeCachePath);
-    }
-    
-    return response()->json([
-        'success' => true,
-        'message' => 'All caches cleared!',
-        'cleared' => [
-            'cache' => true,
-            'config' => true,
-            'views' => true,
-            'routes' => file_exists($routeCachePath) ? false : true
-        ]
-    ]);
-});
-
-// Test: Create dummy image to verify storage works
-Route::get('/test-image', function () {
-    $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
-    
-    // Ensure directory exists
-    if (!is_dir($basePath)) {
-        mkdir($basePath, 0777, true);
-    }
-    
-    // Create a simple test image (1x1 red pixel PNG)
-    $img = imagecreate(100, 100);
-    $red = imagecolorallocate($img, 255, 0, 0);
-    
-    $testFile = $basePath . '/test-image.png';
-    imagepng($img, $testFile);
-    imagedestroy($img);
-    
-    return response()->json([
-        'success' => true,
-        'file_created' => file_exists($testFile),
-        'file_size' => filesize($testFile),
-        'test_url' => asset('storage/test-image.png'),
-        'direct_url' => url('/storage/test-image.png')
-    ]);
-});
-
-// Fix database image paths (run once)
-Route::get('/fix-image-paths', function () {
-    $updated = \DB::table('cards')
-        ->where('image', 'like', 'cards/%')
-        ->update(['image' => \DB::raw("REPLACE(image, 'cards/', '')")]);
-    
-    return response()->json([
-        'success' => true,
-        'message' => 'Fixed image paths',
-        'updated_rows' => $updated
-    ]);
-});
 
 // Auth Routes
 Route::middleware('guest')->group(function () {

@@ -82,8 +82,8 @@ class CardAdminController extends Controller
                 $extension = $image->getClientOriginalExtension();
                 $filename = 'card-' . $slug . '.' . $extension;
                 
-                // Save to /tmp/storage (writable on Vercel production)
-                $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
+                // Save to public/storage (same for all environments)
+                $basePath = public_path('storage');
                 
                 // Ensure base directory exists
                 if (!is_dir($basePath)) {
@@ -193,7 +193,7 @@ class CardAdminController extends Controller
             }
             
             // Delete old image
-            $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
+            $basePath = public_path('storage');
             if ($card->image) {
                 $oldImagePath = $basePath . '/' . $card->image;
                 if (file_exists($oldImagePath)) {
