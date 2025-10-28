@@ -208,8 +208,8 @@
          data-card-id="{{ $card->id }}" 
          data-has-products="{{ $card->products()->where('status', '!=', 'inactive')->count() > 0 ? 'true' : 'false' }}"
          title="{{ $card->title }}">
-        @if($card->image_url)
-          <img src="{{ $card->image_url }}" 
+        @if($card->image)
+          <img src="{{ route('card.image', ['id' => $card->id]) }}" 
                alt="{{ $card->title }}" 
                class="w-full h-full object-cover"
                onerror="this.src='https://placehold.co/1080x1080?text={{ urlencode($card->title) }}'">

@@ -98,8 +98,8 @@ class CardAdminController extends Controller
             
             // Add image URL to response
             $cardData = $card->toArray();
-            if ($card->image && strpos($card->image, 'data:') === 0) {
-                $cardData['image_url'] = $card->image;  // Already a data URL
+            if ($card->image) {
+                $cardData['image_url'] = route('card.image', ['id' => $card->id]);
             }
 
             return response()->json([
@@ -196,8 +196,8 @@ class CardAdminController extends Controller
         
         // Add image URL to response
         $cardData = $card->fresh()->toArray();
-        if ($card->image && strpos($card->image, 'data:') === 0) {
-            $cardData['image_url'] = $card->image;  // Already a data URL
+        if ($card->image) {
+            $cardData['image_url'] = route('card.image', ['id' => $card->id]);
         }
 
         return response()->json(['success' => 'Card berhasil diperbarui', 'card' => $cardData])

@@ -15,6 +15,30 @@ Route::get('/cards/{category}', [ProductController::class, 'showCards'])->name('
 Route::get('/card/{cardId}/products', [ProductController::class, 'showProductsByCard'])->name('card.products');
 Route::get('/products/{type}', [ProductController::class, 'showProductsByType'])->name('products.type');
 
+// Serve card images as base64 data
+Route::get('/card-image/{id}', function ($id) {
+    $card = \App\Models\Card::find($id);
+    
+    if (!$card || !$card->image) {
+        return response()->noContent(404);
+    }
+    
+    // If it's already a data URL, return it as-is
+    if (strpos($card->image, 'data:') === 0) {
+        // Extract the MIME type and base64 data
+        if (preg_match('/^data:([^;]+);base64,(.+)$/', $card->image, $matches)) {
+            $mimeType = $matches[1];
+            $imageData = base64_decode($matches[2]);
+            
+            return response($imageData)
+                ->header('Content-Type', $mimeType)
+                ->header('Cache-Control', 'public, max-age=31536000');
+        }
+    }
+    
+    return response()->noContent(404);
+})->name('card.image');
+
 // Auth Routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');

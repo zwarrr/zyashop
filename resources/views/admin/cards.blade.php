@@ -266,18 +266,10 @@
       }
 
       tbody.innerHTML = allCards.map(card => {
-        // Handle image path - check multiple possible fields
+        // Handle image path
         let imageSrc = '';
         if (card.image_url) {
-          imageSrc = card.image_url;  // Already a data URL or full URL
-        } else if (card.image) {
-          // Check if it's already a data URL (base64)
-          if (card.image.startsWith('data:')) {
-            imageSrc = card.image;  // Use as-is
-          } else {
-            // Old format - filename
-            imageSrc = `/storage/${card.image}`;
-          }
+          imageSrc = card.image_url;  // From API response
         }
         
         console.log('Rendering card:', {
