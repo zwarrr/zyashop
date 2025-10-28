@@ -233,6 +233,17 @@ class ProductAdminController extends Controller
         }
 
         $product->update($validated);
+        
+        // Reload product to get fresh data from database
+        $product->refresh();
+        
+        \Log::info('Product updated successfully', [
+            'product_id' => $product->id,
+            'has_image_url' => !empty($product->image_url),
+            'image_url_length' => $product->image_url ? strlen($product->image_url) : 0,
+            'image_url_starts_with' => $product->image_url ? substr($product->image_url, 0, 50) : 'null',
+            'title' => $product->title
+        ]);
 
         return response()->json(['success' => 'Produk berhasil diperbarui!'], 200)
             ->header('Content-Type', 'application/json');
