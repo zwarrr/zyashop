@@ -21,6 +21,18 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 });
 
+// Debug route - remove after testing
+Route::get('/debug-auth', function (Illuminate\Http\Request $request) {
+    return response()->json([
+        'auth_check' => Auth::check(),
+        'auth_user' => Auth::user(),
+        'session_id' => session()->getId(),
+        'session_driver' => config('session.driver'),
+        'cookies' => $request->cookies->all(),
+        'has_zyashop_auth' => $request->hasCookie('zyashop_auth'),
+    ]);
+});
+
 // Admin Routes - Authenticated Users  
 Route::middleware('vercel.auth')->group(function () {
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
