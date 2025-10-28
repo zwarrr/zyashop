@@ -33,6 +33,11 @@ class Product extends Model
             return null;
         }
         
+        // If image is already base64 data, return it directly
+        if (str_starts_with($value, 'data:image/')) {
+            return $value;
+        }
+        
         // If already full URL, return as is
         if (str_starts_with($value, 'http') || str_starts_with($value, '/storage')) {
             return $value;

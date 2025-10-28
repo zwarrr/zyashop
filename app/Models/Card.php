@@ -26,6 +26,11 @@ class Card extends Model
             return null;
         }
         
+        // If image is already base64 data, return it directly
+        if (str_starts_with($this->image, 'data:image/')) {
+            return $this->image;
+        }
+        
         // If image path already starts with 'cards/', use it as is
         $imagePath = str_starts_with($this->image, 'cards/') 
             ? $this->image 
