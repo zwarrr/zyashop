@@ -15,14 +15,11 @@ class CardAdminController extends Controller
      */
     public function index(Request $request)
     {
-        // Get cards with image URLs
+        // Get cards with image URLs using accessor
         $cards = auth()->user()->cards()->get()->map(function($card) {
             $cardData = $card->toArray();
-            if ($card->image) {
-                $cardData['image_url'] = asset('storage/' . $card->image);
-            } else {
-                $cardData['image_url'] = null;
-            }
+            // Use the accessor which handles both base64 and file paths
+            $cardData['image_url'] = $card->image_url;
             return $cardData;
         });
         
@@ -96,11 +93,9 @@ class CardAdminController extends Controller
 
             $card = Card::create($validated);
             
-            // Add image URL to response
+            // Add image URL to response using accessor
             $cardData = $card->toArray();
-            if ($card->image) {
-                $cardData['image_url'] = route('card.image', ['id' => $card->id]);
-            }
+            $cardData['image_url'] = $card->image_url;
 
             return response()->json([
                 'success' => 'Card berhasil ditambahkan', 
@@ -135,7 +130,7 @@ class CardAdminController extends Controller
                     'title' => $card->title,
                     'category' => $card->category,
                     'status' => $card->status,
-                    'image_url' => $card->image ? '/storage/' . $card->image : null,
+                    'image_url' => $card->image_url,
                 ]
             ]);
         }
@@ -194,11 +189,9 @@ class CardAdminController extends Controller
 
         $card->update($validated);
         
-        // Add image URL to response
+        // Add image URL to response using accessor
         $cardData = $card->fresh()->toArray();
-        if ($card->image) {
-            $cardData['image_url'] = route('card.image', ['id' => $card->id]);
-        }
+        $cardData['image_url'] = $card->image_url;
 
         return response()->json(['success' => 'Card berhasil diperbarui', 'card' => $cardData])
             ->header('Content-Type', 'application/json');

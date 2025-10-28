@@ -15,42 +15,6 @@ Route::get('/cards/{category}', [ProductController::class, 'showCards'])->name('
 Route::get('/card/{cardId}/products', [ProductController::class, 'showProductsByCard'])->name('card.products');
 Route::get('/products/{type}', [ProductController::class, 'showProductsByType'])->name('products.type');
 
-// API route to serve card images (base64 to binary)
-Route::get('/api/card-image/{id}', function ($id) {
-    $card = \App\Models\Card::find($id);
-    
-    if (!$card || !$card->image) {
-        // Return placeholder if image not found
-        $placeholderPath = public_path('img/placeholder.png');
-        if (file_exists($placeholderPath)) {
-            return response()->file($placeholderPath);
-        }
-        return response('Image not found', 404);
-    }
-    
-    // If image is base64 data URL, decode and serve
-    if (strpos($card->image, 'data:') === 0) {
-        preg_match('/data:image\/(\w+);base64,(.+)/', $card->image, $matches);
-        if (isset($matches[2])) {
-            $imageData = base64_decode($matches[2], true);
-            if ($imageData !== false) {
-                $extension = $matches[1];
-                return response($imageData)
-                    ->header('Content-Type', 'image/' . $extension)
-                    ->header('Cache-Control', 'public, max-age=31536000');
-            }
-        }
-    }
-    
-    // Fallback: try to serve from storage if it's a filename
-    $storagePath = storage_path('app/public/' . $card->image);
-    if (file_exists($storagePath)) {
-        return response()->file($storagePath);
-    }
-    
-    return response('Image not found', 404);
-})->name('card.image');
-
 // Auth Routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
