@@ -13,8 +13,15 @@ class CardAdminController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
+        // If AJAX request, return JSON
+        if ($request->ajax() || $request->expectsJson()) {
+            $cards = auth()->user()->cards()->get();
+            return response()->json(['cards' => $cards]);
+        }
+        
+        // Otherwise return view
         $cards = auth()->user()->cards()->get();
         $categories = auth()->user()->categories()->get();
         return view('admin.cards', compact('cards', 'categories'));
@@ -53,6 +60,12 @@ class CardAdminController extends Controller
                 $dimensions = getimagesize($image->path());
                 if ($dimensions[0] != 1080 || $dimensions[1] != 1080) {
                     return response()->json(['error' => 'Gambar harus berukuran 1080x1080 pixel'], 422);
+                }
+                
+                // Ensure cards directory exists
+                $cardsDir = storage_path('app/public/cards');
+                if (!file_exists($cardsDir)) {
+                    mkdir($cardsDir, 0755, true);
                 }
                 
                 // Generate custom filename: card-{slug}.{extension}

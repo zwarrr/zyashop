@@ -56,6 +56,12 @@ class ProfileAdminController extends Controller
 
         // Handle image upload with custom filename
         if ($request->hasFile('profile_image')) {
+            // Ensure profiles directory exists
+            $profilesDir = storage_path('app/public/profiles');
+            if (!file_exists($profilesDir)) {
+                mkdir($profilesDir, 0755, true);
+            }
+            
             // Delete old image if exists
             if ($profile->profile_image && Storage::disk('public')->exists(str_replace('/storage/', '', $profile->profile_image))) {
                 Storage::disk('public')->delete(str_replace('/storage/', '', $profile->profile_image));

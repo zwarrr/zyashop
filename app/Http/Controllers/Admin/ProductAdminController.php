@@ -15,12 +15,18 @@ class ProductAdminController extends Controller
     /**
      * Display a listing of products (Admin)
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
         
         if (!$user) {
             return redirect()->route('login');
+        }
+
+        // If AJAX request, return JSON
+        if ($request->ajax() || $request->expectsJson()) {
+            $products = $user->products()->get();
+            return response()->json(['products' => $products]);
         }
 
         $products = $user->products()->paginate(10);
@@ -81,6 +87,12 @@ class ProductAdminController extends Controller
                 // Check if image is valid
                 if (!$image->isValid()) {
                     return response()->json(['error' => 'File gambar tidak valid'], 422);
+                }
+                
+                // Ensure products directory exists
+                $productsDir = storage_path('app/public/products');
+                if (!file_exists($productsDir)) {
+                    mkdir($productsDir, 0755, true);
                 }
                 
                 $slug = Str::slug($validated['title']);
