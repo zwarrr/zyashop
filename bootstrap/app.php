@@ -4,6 +4,18 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 
+// Initialize SQLite database in /tmp for Vercel
+if (getenv('VERCEL') === '1' || (isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'production')) {
+    $dbPath = '/tmp/database.sqlite';
+    $sourceDb = __DIR__ . '/../database/database.sqlite';
+    
+    // Copy database to /tmp if not exists or if source is newer
+    if (!file_exists($dbPath) || (file_exists($sourceDb) && filemtime($sourceDb) > filemtime($dbPath))) {
+        @copy($sourceDb, $dbPath);
+        @chmod($dbPath, 0666);
+    }
+}
+
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
