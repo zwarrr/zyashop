@@ -21,21 +21,30 @@ Route::get('/storage/{path}', function ($path) {
     $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
     $storagePath = $basePath . '/' . $path;
     
-    // Debug logging
-    \Log::info('Storage request', [
-        'path' => $path,
-        'basePath' => $basePath,
-        'fullPath' => $storagePath,
-        'exists' => file_exists($storagePath),
-        'listDir' => is_dir(dirname($storagePath)) ? scandir(dirname($storagePath)) : 'not a dir'
-    ]);
-    
     if (!file_exists($storagePath)) {
-        // Return 404 image or placeholder
-        abort(404, 'Image not found: ' . $storagePath);
+        abort(404, 'Image not found');
     }
     
-    $mimeType = mime_content_type($storagePath);
+    // Get file extension and determine MIME type
+    $extension = strtolower(pathinfo($storagePath, PATHINFO_EXTENSION));
+    $mimeTypes = [
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'gif' => 'image/gif',
+        'webp' => 'image/webp',
+        'svg' => 'image/svg+xml',
+    ];
+    
+    $mimeType = $mimeTypes[$extension] ?? 'application/octet-stream';
+    
+    \Log::info('Serving image', [
+        'path' => $path,
+        'extension' => $extension,
+        'mime' => $mimeType,
+        'size' => filesize($storagePath)
+    ]);
+    
     return response()->file($storagePath, [
         'Content-Type' => $mimeType,
         'Cache-Control' => 'public, max-age=31536000',
