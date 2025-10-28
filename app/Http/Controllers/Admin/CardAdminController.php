@@ -103,33 +103,42 @@ class CardAdminController extends Controller
                     $counter++;
                 }
                 
-                \Log::info('Store - Moving image file', [
+                \Log::info('Store - Saving image file', [
                     'filename' => $filename, 
                     'destination' => $finalPath,
                     'tmp_file' => $image->path(),
                     'tmp_size' => filesize($image->path())
                 ]);
                 
-                // Use move() for more reliable upload on Vercel
-                if ($image->move($cardsDir, $filename)) {
-                    $path = 'cards/' . $filename;
-                    $fileSize = file_exists($finalPath) ? filesize($finalPath) : 0;
-                    
-                    \Log::info('Store - Image moved successfully', [
-                        'path' => $path,
-                        'full_path' => $finalPath,
-                        'final_size' => $fileSize
-                    ]);
-                    
-                    if ($fileSize === 0) {
-                        \Log::error('Store - WARNING: File size is 0 after move!');
-                    }
-                    
-                    $validated['image'] = $path;
-                } else {
-                    \Log::error('Store - Failed to move uploaded file');
+                // Read file content and write directly (more reliable than move on Vercel)
+                $imageContent = file_get_contents($image->path());
+                if ($imageContent === false) {
+                    \Log::error('Store - Failed to read uploaded file');
+                    return response()->json(['error' => 'Gagal membaca file gambar'], 500);
+                }
+                
+                $bytesWritten = file_put_contents($finalPath, $imageContent);
+                if ($bytesWritten === false || $bytesWritten === 0) {
+                    \Log::error('Store - Failed to write file', ['bytes' => $bytesWritten]);
                     return response()->json(['error' => 'Gagal menyimpan file gambar'], 500);
                 }
+                
+                $path = 'cards/' . $filename;
+                $fileSize = filesize($finalPath);
+                
+                \Log::info('Store - Image saved successfully', [
+                    'path' => $path,
+                    'full_path' => $finalPath,
+                    'bytes_written' => $bytesWritten,
+                    'final_size' => $fileSize
+                ]);
+                
+                if ($fileSize === 0) {
+                    \Log::error('Store - WARNING: File size is 0 after save!');
+                    return response()->json(['error' => 'File tersimpan tapi kosong'], 500);
+                }
+                
+                $validated['image'] = $path;
             } else {
                 \Log::info('Store - No image file in request');
             }
@@ -254,33 +263,42 @@ class CardAdminController extends Controller
                 $counter++;
             }
             
-            \Log::info('Update - Moving image file', [
+            \Log::info('Update - Saving image file', [
                 'filename' => $filename,
                 'destination' => $finalPath,
                 'tmp_file' => $image->path(),
                 'tmp_size' => filesize($image->path())
             ]);
             
-            // Use move() for more reliable upload on Vercel
-            if ($image->move($cardsDir, $filename)) {
-                $path = 'cards/' . $filename;
-                $fileSize = file_exists($finalPath) ? filesize($finalPath) : 0;
-                
-                \Log::info('Update - Image moved successfully', [
-                    'path' => $path,
-                    'full_path' => $finalPath,
-                    'final_size' => $fileSize
-                ]);
-                
-                if ($fileSize === 0) {
-                    \Log::error('Update - WARNING: File size is 0 after move!');
-                }
-                
-                $validated['image'] = $path;
-            } else {
-                \Log::error('Update - Failed to move uploaded file');
+            // Read file content and write directly (more reliable than move on Vercel)
+            $imageContent = file_get_contents($image->path());
+            if ($imageContent === false) {
+                \Log::error('Update - Failed to read uploaded file');
+                return response()->json(['error' => 'Gagal membaca file gambar'], 500);
+            }
+            
+            $bytesWritten = file_put_contents($finalPath, $imageContent);
+            if ($bytesWritten === false || $bytesWritten === 0) {
+                \Log::error('Update - Failed to write file', ['bytes' => $bytesWritten]);
                 return response()->json(['error' => 'Gagal menyimpan file gambar'], 500);
             }
+            
+            $path = 'cards/' . $filename;
+            $fileSize = filesize($finalPath);
+            
+            \Log::info('Update - Image saved successfully', [
+                'path' => $path,
+                'full_path' => $finalPath,
+                'bytes_written' => $bytesWritten,
+                'final_size' => $fileSize
+            ]);
+            
+            if ($fileSize === 0) {
+                \Log::error('Update - WARNING: File size is 0 after save!');
+                return response()->json(['error' => 'File tersimpan tapi kosong'], 500);
+            }
+            
+            $validated['image'] = $path;
         } else {
             \Log::info('Update - No image file in request');
         }
