@@ -79,61 +79,55 @@ class CardAdminController extends Controller
                     return response()->json(['error' => 'Gambar harus berukuran 1080x1080 pixel'], 422);
                 }
                 
-                // Ensure cards directory exists - use /tmp in production
-                $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
-                $cardsDir = $basePath . '/cards';
-                if (!file_exists($cardsDir)) {
-                    \Log::info('Store - Creating cards directory', ['path' => $cardsDir]);
-                    if (!mkdir($cardsDir, 0755, true)) {
-                        return response()->json(['error' => 'Tidak dapat membuat direktori untuk menyimpan gambar'], 500);
-                    }
-                }
-                
                 // Generate custom filename: card-{slug}.{extension}
                 $slug = Str::slug($validated['title']);
                 $extension = $image->getClientOriginalExtension();
                 $filename = 'card-' . $slug . '.' . $extension;
                 
-                // Check if file exists, add counter if needed
-                $counter = 1;
-                $finalPath = $cardsDir . '/' . $filename;
-                while (file_exists($finalPath)) {
-                    $filename = 'card-' . $slug . '-' . $counter . '.' . $extension;
-                    $finalPath = $cardsDir . '/' . $filename;
-                    $counter++;
+                // Ensure cards directory exists BEFORE Storage::put()
+                $storagePath = 'cards/' . $filename;
+                
+                // Force create directory structure in /tmp
+                $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
+                $cardsDir = $basePath . '/cards';
+                if (!is_dir($cardsDir)) {
+                    \Log::info('Store - Creating cards directory', ['path' => $cardsDir]);
+                    mkdir($cardsDir, 0777, true);
                 }
                 
-                \Log::info('Store - Saving image file', [
-                    'filename' => $filename, 
-                    'destination' => $finalPath,
-                    'tmp_file' => $image->path(),
+                \Log::info('Store - Saving image', [
+                    'filename' => $filename,
+                    'storage_path' => $storagePath,
+                    'cards_dir' => $cardsDir,
+                    'dir_exists' => is_dir($cardsDir),
                     'tmp_size' => filesize($image->path())
                 ]);
                 
-                // Use Laravel Storage facade - most reliable for Vercel
-                $storagePath = 'cards/' . $filename;
-                $success = \Storage::disk('public')->put($storagePath, file_get_contents($image->getRealPath()));
+                // Use Laravel Storage facade with actual file content
+                $imageContent = file_get_contents($image->getRealPath());
+                $success = \Storage::disk('public')->put($storagePath, $imageContent);
                 
                 if (!$success) {
-                    \Log::error('Store - Failed to save via Storage facade');
+                    \Log::error('Store - Storage::put failed');
                     return response()->json(['error' => 'Gagal menyimpan file gambar'], 500);
                 }
                 
                 // Verify file exists and has content
-                if (!\Storage::disk('public')->exists($storagePath)) {
-                    \Log::error('Store - File does not exist after save');
+                $fullPath = $basePath . '/' . $storagePath;
+                if (!file_exists($fullPath)) {
+                    \Log::error('Store - File does not exist after save', ['path' => $fullPath]);
                     return response()->json(['error' => 'File tidak tersimpan'], 500);
                 }
                 
-                $fileSize = \Storage::disk('public')->size($storagePath);
-                \Log::info('Store - Image saved successfully', [
+                $fileSize = filesize($fullPath);
+                \Log::info('Store - Image saved', [
                     'path' => $storagePath,
+                    'full_path' => $fullPath,
                     'size' => $fileSize
                 ]);
                 
                 if ($fileSize === 0) {
-                    \Log::error('Store - WARNING: File size is 0 after save!');
-                    \Storage::disk('public')->delete($storagePath);
+                    \Log::error('Store - File is EMPTY!');
                     return response()->json(['error' => 'File tersimpan tapi kosong'], 500);
                 }
                 
@@ -241,11 +235,12 @@ class CardAdminController extends Controller
                 }
             }
             
-            // Ensure cards directory exists
+            // Ensure cards directory exists BEFORE Storage::put()
             $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
             $cardsDir = $basePath . '/cards';
-            if (!file_exists($cardsDir)) {
-                mkdir($cardsDir, 0755, true);
+            if (!is_dir($cardsDir)) {
+                \Log::info('Update - Creating cards directory', ['path' => $cardsDir]);
+                mkdir($cardsDir, 0777, true);
             }
             
             // Generate custom filename: card-{slug}.{extension}
@@ -253,46 +248,41 @@ class CardAdminController extends Controller
             $extension = $image->getClientOriginalExtension();
             $filename = 'card-' . $slug . '.' . $extension;
             
-            // Check if file exists, add counter if needed
-            $counter = 1;
-            $finalPath = $cardsDir . '/' . $filename;
-            while (file_exists($finalPath) && $filename !== basename($card->image)) {
-                $filename = 'card-' . $slug . '-' . $counter . '.' . $extension;
-                $finalPath = $cardsDir . '/' . $filename;
-                $counter++;
-            }
+            $storagePath = 'cards/' . $filename;
             
-            \Log::info('Update - Saving image file', [
+            \Log::info('Update - Saving image', [
                 'filename' => $filename,
-                'destination' => $finalPath,
-                'tmp_file' => $image->path(),
+                'storage_path' => $storagePath,
+                'cards_dir' => $cardsDir,
+                'dir_exists' => is_dir($cardsDir),
                 'tmp_size' => filesize($image->path())
             ]);
             
-            // Use Laravel Storage facade - most reliable for Vercel
-            $storagePath = 'cards/' . $filename;
-            $success = \Storage::disk('public')->put($storagePath, file_get_contents($image->getRealPath()));
+            // Use Laravel Storage facade with actual file content
+            $imageContent = file_get_contents($image->getRealPath());
+            $success = \Storage::disk('public')->put($storagePath, $imageContent);
             
             if (!$success) {
-                \Log::error('Update - Failed to save via Storage facade');
+                \Log::error('Update - Storage::put failed');
                 return response()->json(['error' => 'Gagal menyimpan file gambar'], 500);
             }
             
             // Verify file exists and has content
-            if (!\Storage::disk('public')->exists($storagePath)) {
-                \Log::error('Update - File does not exist after save');
+            $fullPath = $basePath . '/' . $storagePath;
+            if (!file_exists($fullPath)) {
+                \Log::error('Update - File does not exist after save', ['path' => $fullPath]);
                 return response()->json(['error' => 'File tidak tersimpan'], 500);
             }
             
-            $fileSize = \Storage::disk('public')->size($storagePath);
-            \Log::info('Update - Image saved successfully', [
+            $fileSize = filesize($fullPath);
+            \Log::info('Update - Image saved', [
                 'path' => $storagePath,
+                'full_path' => $fullPath,
                 'size' => $fileSize
             ]);
             
             if ($fileSize === 0) {
-                \Log::error('Update - WARNING: File size is 0 after save!');
-                \Storage::disk('public')->delete($storagePath);
+                \Log::error('Update - File is EMPTY!');
                 return response()->json(['error' => 'File tersimpan tapi kosong'], 500);
             }
             
