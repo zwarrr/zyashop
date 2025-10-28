@@ -39,7 +39,20 @@ class ProductController extends Controller
                      ->with(['products' => function($query) {
                          $query->where('status', '!=', 'inactive');
                      }])
-                     ->get();
+                     ->get()
+                     ->map(function($card) {
+                         // Add image_url for frontend display
+                         if ($card->image && strpos($card->image, 'data:') === 0) {
+                             // Base64 image - use API route
+                             $card->image_url = route('card.image', ['id' => $card->id]);
+                         } else if ($card->image) {
+                             // Regular filename - use storage path
+                             $card->image_url = asset('storage/' . $card->image);
+                         } else {
+                             $card->image_url = null;
+                         }
+                         return $card;
+                     });
         
         return view('zyashp', [
             'userProfile' => $userProfile,
@@ -87,7 +100,32 @@ class ProductController extends Controller
         $products = $user->cards()
                         ->where('category', $category)
                         ->where('status', 'active')
-                        ->paginate(12);
+                        ->get()
+                        ->map(function($card) {
+                            // Add image_url for frontend display
+                            if ($card->image && strpos($card->image, 'data:') === 0) {
+                                $card->image_url = route('card.image', ['id' => $card->id]);
+                            } else if ($card->image) {
+                                $card->image_url = asset('storage/' . $card->image);
+                            } else {
+                                $card->image_url = null;
+                            }
+                            return $card;
+                        });
+        
+        // Convert to paginator for compatibility
+        $perPage = 12;
+        $currentPage = request()->get('page', 1);
+        $offset = ($currentPage - 1) * $perPage;
+        $itemsForCurrentPage = $products->slice($offset, $perPage)->values();
+        
+        $products = new \Illuminate\Pagination\LengthAwarePaginator(
+            $itemsForCurrentPage,
+            $products->count(),
+            $perPage,
+            $currentPage,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
         
         $userProfile = $user->profile;
         
