@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -27,7 +28,17 @@ class Product extends Model
     /**
      * Get the full URL for the product image.
      */
-    public function getImageUrlAttribute($value)
+    protected function imageUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => $this->getImageUrl($value)
+        );
+    }
+
+    /**
+     * Process image URL value
+     */
+    private function getImageUrl($value)
     {
         if (!$value) {
             return null;

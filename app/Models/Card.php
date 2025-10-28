@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -20,23 +21,27 @@ class Card extends Model
     /**
      * Get the full URL for the card image.
      */
-    public function getImageUrlAttribute()
+    protected function imageUrl(): Attribute
     {
-        if (!$this->image) {
-            return null;
-        }
-        
-        // If image is already base64 data, return it directly
-        if (str_starts_with($this->image, 'data:image/')) {
-            return $this->image;
-        }
-        
-        // If image path already starts with 'cards/', use it as is
-        $imagePath = str_starts_with($this->image, 'cards/') 
-            ? $this->image 
-            : 'cards/' . $this->image;
-        
-        return asset('storage/' . $imagePath);
+        return Attribute::make(
+            get: function () {
+                if (!$this->image) {
+                    return null;
+                }
+                
+                // If image is already base64 data, return it directly
+                if (str_starts_with($this->image, 'data:image/')) {
+                    return $this->image;
+                }
+                
+                // If image path already starts with 'cards/', use it as is
+                $imagePath = str_starts_with($this->image, 'cards/') 
+                    ? $this->image 
+                    : 'cards/' . $this->image;
+                
+                return asset('storage/' . $imagePath);
+            }
+        );
     }
 
     /**
