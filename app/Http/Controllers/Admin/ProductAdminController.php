@@ -107,7 +107,15 @@ class ProductAdminController extends Controller
                     'mime_type' => $mimeType
                 ]);
             }
+            
             $product = Product::create($validated);
+            
+            \Log::info('Product created successfully', [
+                'product_id' => $product->id,
+                'has_image_url' => !empty($product->image_url),
+                'image_url_length' => $product->image_url ? strlen($product->image_url) : 0,
+                'image_url_starts_with' => $product->image_url ? substr($product->image_url, 0, 30) : 'null'
+            ]);
             
             // Return product data with image_url (already base64 if uploaded)
             $productData = $product->toArray();
