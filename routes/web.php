@@ -34,7 +34,7 @@ Route::get('/debug-auth', function (Illuminate\Http\Request $request) {
 });
 
 // Admin Routes - Authenticated Users  
-Route::middleware('vercel.auth')->group(function () {
+Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
     
     // Admin Product Management
