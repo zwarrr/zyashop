@@ -20,17 +20,19 @@ Route::get('/check-paths', function () {
     return response()->json($paths);
 });
 
-// Image Serving Route - MUST BE FIRST! Support both with/without subfolder
+// Image Serving Route - MUST BE FIRST! Serve from /tmp/storage
 Route::get('/storage/{path}', function ($path) {
-    $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
-    
-    // Try direct path first (new format)
+    // Always serve from /tmp in production, storage in local
+    $basePath = '/tmp/storage';
     $filePath = $basePath . '/' . $path;
     
-    // If not found and path has subfolder, try without subfolder (fallback)
-    if (!file_exists($filePath) && strpos($path, '/') !== false) {
-        $filename = basename($path);
-        $filePath = $basePath . '/' . $filename;
+    // If not found locally and in production, return 404
+    if (!file_exists($filePath)) {
+        // Try without subfolder if path has it
+        if (strpos($path, '/') !== false) {
+            $filename = basename($path);
+            $filePath = $basePath . '/' . $filename;
+        }
     }
     
     if (!file_exists($filePath)) {
