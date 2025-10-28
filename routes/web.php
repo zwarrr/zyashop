@@ -8,6 +8,18 @@ use App\Http\Controllers\Admin\KategoriAdminController;
 use App\Http\Controllers\Admin\CardAdminController;
 use App\Http\Controllers\Admin\ProfileAdminController;
 
+// Check writable paths
+Route::get('/check-paths', function () {
+    $paths = [
+        '/tmp' => is_writable('/tmp'),
+        '/tmp/storage' => is_dir('/tmp/storage') && is_writable('/tmp/storage'),
+        'public/storage' => is_writable(base_path('public/storage')),
+        'storage_path' => is_writable(storage_path()),
+    ];
+    
+    return response()->json($paths);
+});
+
 // Image Serving Route - MUST BE FIRST! Support both with/without subfolder
 Route::get('/storage/{path}', function ($path) {
     $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
