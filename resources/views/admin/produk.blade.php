@@ -181,7 +181,7 @@
       </div>
 
       <!-- Modal Body - Scrollable -->
-      <form id="productForm" class="flex-1 overflow-y-auto p-5">
+      <form id="productForm" class="flex-1 overflow-y-auto p-5" enctype="multipart/form-data">
         @csrf
         <input type="hidden" id="productId" name="product_id">
         <input type="hidden" id="formMethod" name="_method" value="POST">
