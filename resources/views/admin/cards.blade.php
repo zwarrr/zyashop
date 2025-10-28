@@ -266,15 +266,31 @@
       }
 
       tbody.innerHTML = allCards.map(card => {
-        // Handle image path - already includes 'cards/' prefix from database
-        const imageSrc = card.image ? `/storage/${card.image}` : '';
+        // Handle image path - check multiple possible fields
+        let imageSrc = '';
+        if (card.image_url) {
+          imageSrc = card.image_url;
+        } else if (card.image) {
+          imageSrc = `/storage/${card.image}`;
+        }
+        
+        console.log('Rendering card:', {
+          id: card.id,
+          title: card.title,
+          image: card.image,
+          image_url: card.image_url,
+          finalSrc: imageSrc
+        });
+        
         return `
         <tr class="hover:bg-gray-50 transition duration-200 card-row" data-title="${card.title}" data-status="${card.status}">
           <td class="px-6 py-4">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
                 ${imageSrc ? 
-                  `<img src="${imageSrc}" alt="${card.title}" class="w-full h-full object-cover" onerror="this.style.display='none';">` : 
+                  `<img src="${imageSrc}" alt="${card.title}" class="w-full h-full object-cover" 
+                        onerror="console.error('Image load error:', '${imageSrc}'); this.parentElement.innerHTML='<svg class=\\'feather text-gray-600\\' viewBox=\\'0 0 24 24\\'><rect x=\\'3\\' y=\\'3\\' width=\\'18\\' height=\\'18\\' rx=\\'2\\' ry=\\'2\\'></rect><circle cx=\\'8.5\\' cy=\\'8.5\\' r=\\'1.5\\'></circle><path d=\\'M21 15l-5-5L5 21\\'></path></svg>';" 
+                        onload="console.log('✅ Image loaded:', '${imageSrc}');">` : 
                   `<svg class="feather text-gray-600" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg>`
                 }
               </div>

@@ -15,14 +15,23 @@ class CardAdminController extends Controller
      */
     public function index(Request $request)
     {
+        // Get cards with image URLs
+        $cards = auth()->user()->cards()->get()->map(function($card) {
+            $cardData = $card->toArray();
+            if ($card->image) {
+                $cardData['image_url'] = asset('storage/' . $card->image);
+            } else {
+                $cardData['image_url'] = null;
+            }
+            return $cardData;
+        });
+        
         // If AJAX request, return JSON
         if ($request->ajax() || $request->expectsJson()) {
-            $cards = auth()->user()->cards()->get();
             return response()->json(['cards' => $cards]);
         }
         
         // Otherwise return view
-        $cards = auth()->user()->cards()->get();
         $categories = auth()->user()->categories()->get();
         return view('admin.cards', compact('cards', 'categories'));
     }
