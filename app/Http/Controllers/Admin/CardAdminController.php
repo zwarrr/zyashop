@@ -85,22 +85,37 @@ class CardAdminController extends Controller
                 // Save to public/storage (same for all environments)
                 $basePath = public_path('storage');
                 
-                // Ensure base directory exists
-                if (!is_dir($basePath)) {
-                    mkdir($basePath, 0777, true);
+                try {
+                    // Ensure base directory exists
+                    if (!is_dir($basePath)) {
+                        if (!mkdir($basePath, 0777, true)) {
+                            return response()->json(['error' => 'Cannot create directory: ' . $basePath], 500);
+                        }
+                    }
+                    
+                    // Save file directly
+                    $filePath = $basePath . '/' . $filename;
+                    $imageContent = file_get_contents($image->getRealPath());
+                    $bytesWritten = file_put_contents($filePath, $imageContent);
+                    
+                    if ($bytesWritten === false) {
+                        return response()->json(['error' => 'Failed to write file to: ' . $filePath], 500);
+                    }
+                    
+                    // Verify
+                    if (!file_exists($filePath)) {
+                        return response()->json(['error' => 'File not found after save: ' . $filePath], 500);
+                    }
+                    
+                    $fileSize = filesize($filePath);
+                    if ($fileSize === 0) {
+                        return response()->json(['error' => 'File is empty after save'], 500);
+                    }
+                    
+                    $validated['image'] = $filename;
+                } catch (\Exception $e) {
+                    return response()->json(['error' => 'Upload error: ' . $e->getMessage()], 500);
                 }
-                
-                // Save file directly
-                $filePath = $basePath . '/' . $filename;
-                $imageContent = file_get_contents($image->getRealPath());
-                file_put_contents($filePath, $imageContent);
-                
-                // Verify
-                if (!file_exists($filePath) || filesize($filePath) === 0) {
-                    return response()->json(['error' => 'Gagal menyimpan gambar'], 500);
-                }
-                
-                $validated['image'] = $filename;
             }
 
             // Generate slug from title
@@ -206,22 +221,37 @@ class CardAdminController extends Controller
             $extension = $image->getClientOriginalExtension();
             $filename = 'card-' . $slug . '.' . $extension;
             
-            // Ensure base directory exists
-            if (!is_dir($basePath)) {
-                mkdir($basePath, 0777, true);
+            try {
+                // Ensure base directory exists
+                if (!is_dir($basePath)) {
+                    if (!mkdir($basePath, 0777, true)) {
+                        return response()->json(['error' => 'Cannot create directory: ' . $basePath], 500);
+                    }
+                }
+                
+                // Save file directly
+                $filePath = $basePath . '/' . $filename;
+                $imageContent = file_get_contents($image->getRealPath());
+                $bytesWritten = file_put_contents($filePath, $imageContent);
+                
+                if ($bytesWritten === false) {
+                    return response()->json(['error' => 'Failed to write file to: ' . $filePath], 500);
+                }
+                
+                // Verify
+                if (!file_exists($filePath)) {
+                    return response()->json(['error' => 'File not found after save: ' . $filePath], 500);
+                }
+                
+                $fileSize = filesize($filePath);
+                if ($fileSize === 0) {
+                    return response()->json(['error' => 'File is empty after save'], 500);
+                }
+                
+                $validated['image'] = $filename;
+            } catch (\Exception $e) {
+                return response()->json(['error' => 'Upload error: ' . $e->getMessage()], 500);
             }
-            
-            // Save file directly
-            $filePath = $basePath . '/' . $filename;
-            $imageContent = file_get_contents($image->getRealPath());
-            file_put_contents($filePath, $imageContent);
-            
-            // Verify
-            if (!file_exists($filePath) || filesize($filePath) === 0) {
-                return response()->json(['error' => 'Gagal menyimpan gambar'], 500);
-            }
-            
-            $validated['image'] = $filename;
         }
 
         // Update slug if title changed
