@@ -274,7 +274,7 @@
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
                 ${imageSrc ? 
-                  `<img src="${imageSrc}" alt="${card.title}" class="w-full h-full object-cover" onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='<svg class=\\"feather text-gray-600\\" viewBox=\\"0 0 24 24\\"><rect x=\\"3\\" y=\\"3\\" width=\\"18\\" height=\\"18\\" rx=\\"2\\" ry=\\"2\\"></rect><circle cx=\\"8.5\\" cy=\\"8.5\\" r=\\"1.5\\"></circle><path d=\\"M21 15l-5-5L5 21\\"></path></svg>';">` : 
+                  `<img src="${imageSrc}" alt="${card.title}" class="w-full h-full object-cover" onerror="this.style.display='none';">` : 
                   `<svg class="feather text-gray-600" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg>`
                 }
               </div>
