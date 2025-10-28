@@ -509,19 +509,21 @@
           body: formData
         });
 
-        // Check if response is JSON
-        const contentType = response.headers.get('content-type');
+        // Get response text first
+        const responseText = await response.text();
         console.log('Response status:', response.status);
-        console.log('Content-Type:', contentType);
+        console.log('Response text:', responseText.substring(0, 200));
         
-        if (!contentType || !contentType.includes('application/json')) {
-          // Get response text for debugging
-          const responseText = await response.text();
-          console.error('Non-JSON response:', responseText.substring(0, 500));
-          throw new Error('Server tidak mengembalikan JSON response. Status: ' + response.status);
+        // Try to parse as JSON regardless of Content-Type
+        let data;
+        try {
+          data = JSON.parse(responseText);
+          console.log('✅ Parsed JSON successfully:', data);
+        } catch (parseError) {
+          console.error('❌ Failed to parse JSON:', parseError);
+          console.error('Response was:', responseText.substring(0, 500));
+          throw new Error('Server response bukan JSON valid');
         }
-
-        const data = await response.json();
 
         hideAjaxLoader();
         closeCardModal();
