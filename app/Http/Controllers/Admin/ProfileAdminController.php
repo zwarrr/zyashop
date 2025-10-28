@@ -56,10 +56,13 @@ class ProfileAdminController extends Controller
 
         // Handle image upload with custom filename
         if ($request->hasFile('profile_image')) {
-            // Ensure profiles directory exists
-            $profilesDir = storage_path('app/public/profiles');
+            // Ensure profiles directory exists - use /tmp in production
+            $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
+            $profilesDir = $basePath . '/profiles';
             if (!file_exists($profilesDir)) {
-                mkdir($profilesDir, 0755, true);
+                if (!mkdir($profilesDir, 0755, true)) {
+                    return response()->json(['error' => 'Tidak dapat membuat direktori untuk menyimpan gambar'], 500);
+                }
             }
             
             // Delete old image if exists

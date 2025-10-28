@@ -17,7 +17,9 @@ Route::get('/products/{type}', [ProductController::class, 'showProductsByType'])
 
 // Image Serving Route - Compatible with Vercel (no symlink needed)
 Route::get('/storage/{path}', function ($path) {
-    $storagePath = storage_path('app/public/' . $path);
+    // Use /tmp in production (Vercel), storage in local
+    $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
+    $storagePath = $basePath . '/' . $path;
     
     if (!file_exists($storagePath)) {
         abort(404);
@@ -32,20 +34,27 @@ Route::get('/storage/{path}', function ($path) {
 
 // Test Storage Route - Check if storage is writable on Vercel
 Route::get('/test-storage', function () {
+    $isProduction = app()->environment('production');
+    $basePath = $isProduction ? '/tmp/storage' : storage_path('app/public');
+    
     $results = [
-        'storage_path' => storage_path('app/public'),
-        'is_writable' => is_writable(storage_path('app/public')),
-        'exists' => file_exists(storage_path('app/public')),
-        'cards_dir_exists' => file_exists(storage_path('app/public/cards')),
-        'cards_dir_writable' => is_writable(storage_path('app/public/cards')),
+        'environment' => app()->environment(),
+        'base_path' => $basePath,
+        'is_writable' => is_writable(dirname($basePath)),
+        'base_exists' => file_exists($basePath),
+        'cards_dir' => $basePath . '/cards',
+        'cards_dir_exists' => file_exists($basePath . '/cards'),
         'tmp_writable' => is_writable('/tmp'),
     ];
     
     // Try create test file
     try {
-        $testFile = storage_path('app/public/test.txt');
+        if (!file_exists($basePath)) {
+            mkdir($basePath, 0755, true);
+        }
+        $testFile = $basePath . '/test.txt';
         file_put_contents($testFile, 'test');
-        $results['test_write'] = 'SUCCESS';
+        $results['test_write'] = 'SUCCESS - File created at: ' . $testFile;
         @unlink($testFile);
     } catch (\Exception $e) {
         $results['test_write'] = 'FAILED: ' . $e->getMessage();

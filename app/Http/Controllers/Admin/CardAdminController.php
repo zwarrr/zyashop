@@ -62,10 +62,13 @@ class CardAdminController extends Controller
                     return response()->json(['error' => 'Gambar harus berukuran 1080x1080 pixel'], 422);
                 }
                 
-                // Ensure cards directory exists
-                $cardsDir = storage_path('app/public/cards');
+                // Ensure cards directory exists - use /tmp in production
+                $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
+                $cardsDir = $basePath . '/cards';
                 if (!file_exists($cardsDir)) {
-                    mkdir($cardsDir, 0755, true);
+                    if (!mkdir($cardsDir, 0755, true)) {
+                        return response()->json(['error' => 'Tidak dapat membuat direktori untuk menyimpan gambar'], 500);
+                    }
                 }
                 
                 // Generate custom filename: card-{slug}.{extension}

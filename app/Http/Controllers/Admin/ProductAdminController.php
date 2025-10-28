@@ -89,10 +89,13 @@ class ProductAdminController extends Controller
                     return response()->json(['error' => 'File gambar tidak valid'], 422);
                 }
                 
-                // Ensure products directory exists
-                $productsDir = storage_path('app/public/products');
+                // Ensure products directory exists - use /tmp in production
+                $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
+                $productsDir = $basePath . '/products';
                 if (!file_exists($productsDir)) {
-                    mkdir($productsDir, 0755, true);
+                    if (!mkdir($productsDir, 0755, true)) {
+                        return response()->json(['error' => 'Tidak dapat membuat direktori untuk menyimpan gambar'], 500);
+                    }
                 }
                 
                 $slug = Str::slug($validated['title']);
