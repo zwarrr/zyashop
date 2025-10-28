@@ -181,7 +181,7 @@
       </div>
 
       <!-- Modal Body - Scrollable -->
-      <form id="productForm" class="flex-1 overflow-y-auto p-5" enctype="multipart/form-data">
+      <form id="productForm" method="POST" action="{{ route('produk.store') }}" class="flex-1 overflow-y-auto p-5" enctype="multipart/form-data">
         @csrf
         <input type="hidden" id="productId" name="product_id">
         <input type="hidden" id="formMethod" name="_method" value="POST">
@@ -453,60 +453,20 @@
     document.getElementById('productForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       
+      const form = document.getElementById('productForm');
       const productId = document.getElementById('productId').value;
-      let url = '{{ route("produk.store") }}';
       
-      const formData = new FormData(document.getElementById('productForm'));
-      
-      // Debug: Log form data
-      console.log('Form submit - Product ID:', productId);
-      console.log('Form submit - Mode:', currentMode);
-      console.log('Form submit - Has image file:', formData.get('image') ? 'YES' : 'NO');
-      if (formData.get('image')) {
-        console.log('Form submit - Image file:', formData.get('image'));
-      }
-      
+      // Set form action based on mode
       if (currentMode === 'edit' && productId) {
-        url = `/produk/${productId}`;
-        formData.append('_method', 'PUT');
+        form.action = `/produk/${productId}`;
+        document.getElementById('formMethod').value = 'PUT';
+      } else {
+        form.action = '{{ route("produk.store") }}';
+        document.getElementById('formMethod').value = 'POST';
       }
       
-      console.log('Form submit - URL:', url);
-      
-      try {
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-            'Accept': 'application/json',
-            // JANGAN set Content-Type! Biar browser auto-set dengan boundary untuk multipart/form-data
-          },
-          body: formData
-        });
-        
-        console.log('Form submit - Response status:', response.status);
-        console.log('Form submit - Response OK:', response.ok);
-
-        closeProductModal();
-        
-        setTimeout(async () => {
-          if (response.ok) {
-            showAlertModal('Berhasil', 'Produk berhasil disimpan!', 'success', () => {
-              location.reload();
-            });
-          } else {
-            const errorData = await response.json();
-            console.error('Form submit - Error response:', errorData);
-            showAlertModal('Error', errorData.error || errorData.message || 'Terjadi kesalahan', 'error');
-          }
-        }, 300);
-      } catch (error) {
-        console.error('Form submit - Catch error:', error);
-        closeProductModal();
-        setTimeout(() => {
-          showAlertModal('Error', 'Terjadi kesalahan saat menyimpan produk: ' + error.message, 'error');
-        }, 300);
-      }
+      // Submit form traditionally (not AJAX) - more reliable for file uploads
+      form.submit();
     });
 
     // Close modal when clicking outside

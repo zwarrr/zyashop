@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Upload Gambar Produk</title>
+</head>
+<body>
+    <h1>Test Upload Gambar Produk ID 1</h1>
+    
+    <form id="testForm">
+        <label>Pilih Gambar:</label><br>
+        <input type="file" id="imageFile" name="image" accept="image/*"><br><br>
+        
+        <label>Title:</label><br>
+        <input type="text" name="title" value="Test Product"><br><br>
+        
+        <label>Card ID:</label><br>
+        <input type="text" name="card_id" value="1"><br><br>
+        
+        <label>Status:</label><br>
+        <select name="status">
+            <option value="active">Active</option>
+        </select><br><br>
+        
+        <label>Link Shopee:</label><br>
+        <input type="url" name="link_shopee" value="https://shopee.co.id/test"><br><br>
+        
+        <button type="submit">Upload</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <script>
+        document.getElementById('testForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const fileInput = document.getElementById('imageFile');
+            
+            // Manual append semua field
+            formData.append('_method', 'PUT');
+            formData.append('title', document.querySelector('[name="title"]').value);
+            formData.append('card_id', document.querySelector('[name="card_id"]').value);
+            formData.append('status', document.querySelector('[name="status"]').value);
+            formData.append('link_shopee', document.querySelector('[name="link_shopee"]').value);
+            
+            if (fileInput.files.length > 0) {
+                formData.append('image', fileInput.files[0]);
+                console.log('File selected:', fileInput.files[0]);
+            } else {
+                console.log('NO FILE SELECTED!');
+            }
+            
+            try {
+                const response = await fetch('https://zyashop.vercel.app/produk/1', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': 'skip-for-test', // Ini akan error di production, tapi kita bisa lihat error messagenya
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                console.log('Response:', data);
+            } catch (error) {
+                document.getElementById('result').innerHTML = '<pre>Error: ' + error.message + '</pre>';
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>

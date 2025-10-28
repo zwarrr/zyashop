@@ -117,24 +117,18 @@ class ProductAdminController extends Controller
                 'image_url_starts_with' => $product->image_url ? substr($product->image_url, 0, 30) : 'null'
             ]);
             
-            // Return product data with image_url (already base64 if uploaded)
-            $productData = $product->toArray();
-
-            return response()->json([
-                'success' => 'Produk berhasil ditambahkan!',
-                'product' => $productData
-            ], 200)->header('Content-Type', 'application/json');
+            return redirect()->route('produk.index')
+                ->with('success', 'Produk berhasil ditambahkan!');
             
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'error' => 'Validasi gagal',
-                'errors' => $e->errors()
-            ], 422)->header('Content-Type', 'application/json');
+            return redirect()->back()
+                ->withErrors($e->errors())
+                ->withInput();
         } catch (\Exception $e) {
             \Log::error('Product store error: ' . $e->getMessage());
-            return response()->json([
-                'error' => 'Terjadi kesalahan: ' . $e->getMessage()
-            ], 500)->header('Content-Type', 'application/json');
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage())
+                ->withInput();
         }
     }
 
@@ -254,8 +248,8 @@ class ProductAdminController extends Controller
             'title' => $product->title
         ]);
 
-        return response()->json(['success' => 'Produk berhasil diperbarui!'], 200)
-            ->header('Content-Type', 'application/json');
+        return redirect()->route('produk.index')
+            ->with('success', 'Produk berhasil diperbarui!');
     }
 
     /**
