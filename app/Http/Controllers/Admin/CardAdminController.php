@@ -73,67 +73,34 @@ class CardAdminController extends Controller
                 }
                 
                 $dimensions = getimagesize($image->path());
-                \Log::info('Store - Image dimensions', ['width' => $dimensions[0], 'height' => $dimensions[1]]);
-                
                 if ($dimensions[0] != 1080 || $dimensions[1] != 1080) {
                     return response()->json(['error' => 'Gambar harus berukuran 1080x1080 pixel'], 422);
                 }
                 
-                // Generate custom filename: card-{slug}.{extension}
+                // Generate filename: card-{slug}.{extension}
                 $slug = Str::slug($validated['title']);
                 $extension = $image->getClientOriginalExtension();
                 $filename = 'card-' . $slug . '.' . $extension;
                 
-                // Ensure cards directory exists BEFORE Storage::put()
-                $storagePath = 'cards/' . $filename;
-                
-                // Force create directory structure in /tmp
+                // Save directly to /tmp/storage (no subfolder)
                 $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
-                $cardsDir = $basePath . '/cards';
-                if (!is_dir($cardsDir)) {
-                    \Log::info('Store - Creating cards directory', ['path' => $cardsDir]);
-                    mkdir($cardsDir, 0777, true);
+                
+                // Ensure base directory exists
+                if (!is_dir($basePath)) {
+                    mkdir($basePath, 0777, true);
                 }
                 
-                \Log::info('Store - Saving image', [
-                    'filename' => $filename,
-                    'storage_path' => $storagePath,
-                    'cards_dir' => $cardsDir,
-                    'dir_exists' => is_dir($cardsDir),
-                    'tmp_size' => filesize($image->path())
-                ]);
-                
-                // Use Laravel Storage facade with actual file content
+                // Save file directly
+                $filePath = $basePath . '/' . $filename;
                 $imageContent = file_get_contents($image->getRealPath());
-                $success = \Storage::disk('public')->put($storagePath, $imageContent);
+                file_put_contents($filePath, $imageContent);
                 
-                if (!$success) {
-                    \Log::error('Store - Storage::put failed');
-                    return response()->json(['error' => 'Gagal menyimpan file gambar'], 500);
+                // Verify
+                if (!file_exists($filePath) || filesize($filePath) === 0) {
+                    return response()->json(['error' => 'Gagal menyimpan gambar'], 500);
                 }
                 
-                // Verify file exists and has content
-                $fullPath = $basePath . '/' . $storagePath;
-                if (!file_exists($fullPath)) {
-                    \Log::error('Store - File does not exist after save', ['path' => $fullPath]);
-                    return response()->json(['error' => 'File tidak tersimpan'], 500);
-                }
-                
-                $fileSize = filesize($fullPath);
-                \Log::info('Store - Image saved', [
-                    'path' => $storagePath,
-                    'full_path' => $fullPath,
-                    'size' => $fileSize
-                ]);
-                
-                if ($fileSize === 0) {
-                    \Log::error('Store - File is EMPTY!');
-                    return response()->json(['error' => 'File tersimpan tapi kosong'], 500);
-                }
-                
-                $validated['image'] = $storagePath;
-            } else {
-                \Log::info('Store - No image file in request');
+                $validated['image'] = $filename;
             }
 
             // Generate slug from title
@@ -226,69 +193,35 @@ class CardAdminController extends Controller
             }
             
             // Delete old image
+            $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
             if ($card->image) {
-                $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
                 $oldImagePath = $basePath . '/' . $card->image;
                 if (file_exists($oldImagePath)) {
                     unlink($oldImagePath);
-                    \Log::info('Update - Deleted old image', ['path' => $card->image]);
                 }
             }
             
-            // Ensure cards directory exists BEFORE Storage::put()
-            $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
-            $cardsDir = $basePath . '/cards';
-            if (!is_dir($cardsDir)) {
-                \Log::info('Update - Creating cards directory', ['path' => $cardsDir]);
-                mkdir($cardsDir, 0777, true);
-            }
-            
-            // Generate custom filename: card-{slug}.{extension}
+            // Generate filename: card-{slug}.{extension}
             $slug = Str::slug($validated['title']);
             $extension = $image->getClientOriginalExtension();
             $filename = 'card-' . $slug . '.' . $extension;
             
-            $storagePath = 'cards/' . $filename;
+            // Ensure base directory exists
+            if (!is_dir($basePath)) {
+                mkdir($basePath, 0777, true);
+            }
             
-            \Log::info('Update - Saving image', [
-                'filename' => $filename,
-                'storage_path' => $storagePath,
-                'cards_dir' => $cardsDir,
-                'dir_exists' => is_dir($cardsDir),
-                'tmp_size' => filesize($image->path())
-            ]);
-            
-            // Use Laravel Storage facade with actual file content
+            // Save file directly
+            $filePath = $basePath . '/' . $filename;
             $imageContent = file_get_contents($image->getRealPath());
-            $success = \Storage::disk('public')->put($storagePath, $imageContent);
+            file_put_contents($filePath, $imageContent);
             
-            if (!$success) {
-                \Log::error('Update - Storage::put failed');
-                return response()->json(['error' => 'Gagal menyimpan file gambar'], 500);
+            // Verify
+            if (!file_exists($filePath) || filesize($filePath) === 0) {
+                return response()->json(['error' => 'Gagal menyimpan gambar'], 500);
             }
             
-            // Verify file exists and has content
-            $fullPath = $basePath . '/' . $storagePath;
-            if (!file_exists($fullPath)) {
-                \Log::error('Update - File does not exist after save', ['path' => $fullPath]);
-                return response()->json(['error' => 'File tidak tersimpan'], 500);
-            }
-            
-            $fileSize = filesize($fullPath);
-            \Log::info('Update - Image saved', [
-                'path' => $storagePath,
-                'full_path' => $fullPath,
-                'size' => $fileSize
-            ]);
-            
-            if ($fileSize === 0) {
-                \Log::error('Update - File is EMPTY!');
-                return response()->json(['error' => 'File tersimpan tapi kosong'], 500);
-            }
-            
-            $validated['image'] = $storagePath;
-        } else {
-            \Log::info('Update - No image file in request');
+            $validated['image'] = $filename;
         }
 
         // Update slug if title changed
