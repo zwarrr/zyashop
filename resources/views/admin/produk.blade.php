@@ -494,19 +494,40 @@
         const data = await response.json();
         console.log('Response data:', data);
         
+        // Close modal first
         closeProductModal();
         
-        setTimeout(() => {
-          if (response.ok) {
+        // Check response status
+        if (response.ok && response.status === 201) {
+          // Success - show success message and reload
+          setTimeout(() => {
             showAlertModal('Berhasil', data.success || 'Produk berhasil disimpan!', 'success', () => {
               location.reload();
             });
-          } else {
-            const errorMsg = data.error || data.message || 'Terjadi kesalahan';
-            console.error('Error from server:', errorMsg, data.errors);
-            showAlertModal('Error', errorMsg, 'error');
+          }, 300);
+        } else {
+          // Error - show error message
+          let errorMsg = 'Terjadi kesalahan';
+          
+          if (data.error) {
+            errorMsg = data.error;
+          } else if (data.errors) {
+            // Validation errors
+            errorMsg = Object.values(data.errors).flat().join(', ');
+          } else if (data.message) {
+            errorMsg = data.message;
           }
-        }, 300);
+          
+          console.error('Server error:', {
+            status: response.status,
+            message: errorMsg,
+            fullData: data
+          });
+          
+          setTimeout(() => {
+            showAlertModal('Error', errorMsg, 'error');
+          }, 300);
+        }
       } catch (error) {
         console.error('Fetch error:', error);
         closeProductModal();
