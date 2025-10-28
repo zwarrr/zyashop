@@ -291,8 +291,8 @@
     let currentMode = 'create';
     let allCards = {!! json_encode($cards) !!};
 
-    // Toggle Dropdown
-    function toggleDropdown(id) {
+    // Toggle Dropdown - Make it globally accessible
+    window.toggleDropdown = function(id) {
       const dropdown = document.getElementById(`dropdown-${id}`);
       document.querySelectorAll('[id^="dropdown-"]').forEach(d => {
         if (d.id !== `dropdown-${id}`) d.classList.add('hidden');
@@ -308,7 +308,7 @@
     });
 
     // Preview image when file selected
-    function previewProductImage(event) {
+    window.previewProductImage = function(event) {
       const file = event.target.files[0];
       if (file) {
         // Validate file size (10MB = 10485760 bytes)
@@ -334,14 +334,14 @@
     }
 
     // Remove product image preview
-    function removeProductImage() {
+    window.removeProductImage = function() {
       document.getElementById('imagePreview').src = '';
       document.getElementById('imagePreviewContainer').classList.add('hidden');
       document.getElementById('imageInputContainer').classList.remove('hidden');
       document.getElementById('productImage').value = '';
     }
 
-    function openProductModal(mode = 'create', productId = null) {
+    window.openProductModal = function(mode = 'create', productId = null) {
       currentMode = mode;
       const modal = document.getElementById('productModal');
       const form = document.getElementById('productForm');
@@ -409,7 +409,7 @@
       modal.classList.add('flex');
     }
 
-    function closeProductModal() {
+    window.closeProductModal = function() {
       const modal = document.getElementById('productModal');
       modal.classList.add('hidden');
       modal.classList.remove('flex');
@@ -418,7 +418,7 @@
       document.getElementById('imagePreviewContainer').classList.add('hidden');
     }
 
-    function deleteProduct(productId) {
+    window.deleteProduct = function(productId) {
       openDeleteConfirmModal(
         'Apakah Anda yakin ingin menghapus produk ini?',
         function() {
