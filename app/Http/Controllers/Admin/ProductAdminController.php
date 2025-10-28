@@ -62,16 +62,14 @@ class ProductAdminController extends Controller
     {
         try {
             $validated = $request->validate([
-                'title' => 'required|string|max:255',
-                'card_id' => 'required|exists:cards,id',
-                'description' => 'nullable|string',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
-                'status' => 'required|in:active,inactive,coming_soon',
-                'link_shopee' => 'nullable|url',
-                'link_tiktok' => 'nullable|url',
-            ]);
-
-            // Validasi: Minimal salah satu link harus diisi
+            'title' => 'required|string|max:255',
+            'card_id' => 'required|exists:cards,id',
+            'description' => 'nullable|string',
+            'image' => 'nullable|file|max:10240', // Simplified validation
+            'status' => 'required|in:active,inactive,coming_soon',
+            'link_shopee' => 'nullable|url',
+            'link_tiktok' => 'nullable|url',
+        ]);            // Validasi: Minimal salah satu link harus diisi
             if (empty($validated['link_shopee']) && empty($validated['link_tiktok'])) {
                 return response()->json([
                     'error' => 'Minimal salah satu link (Shopee atau Tiktok) harus diisi!'
@@ -84,6 +82,14 @@ class ProductAdminController extends Controller
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
                 
+                // Manual validation for image type
+                $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+                if (!in_array($image->getMimeType(), $allowedMimes)) {
+                    return redirect()->back()
+                        ->withErrors(['image' => 'File harus berupa gambar (JPEG, PNG, JPG, atau GIF)'])
+                        ->withInput();
+                }
+                
                 \Log::info('Store - Product image upload detected', [
                     'original_name' => $image->getClientOriginalName(),
                     'size' => $image->getSize(),
@@ -92,7 +98,9 @@ class ProductAdminController extends Controller
                 
                 // Check if image is valid
                 if (!$image->isValid()) {
-                    return response()->json(['error' => 'File gambar tidak valid'], 422);
+                    return redirect()->back()
+                        ->withErrors(['image' => 'File gambar tidak valid'])
+                        ->withInput();
                 }
                 
                 // Store image in base64 format in database for Vercel compatibility
@@ -199,7 +207,7 @@ class ProductAdminController extends Controller
             'title' => 'required|string|max:255',
             'card_id' => 'required|exists:cards,id',
             'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
+            'image' => 'nullable|file|max:10240', // Simplified validation - just check if it's a file
             'status' => 'required|in:active,inactive,coming_soon',
             'link_shopee' => 'nullable|url',
             'link_tiktok' => 'nullable|url',
@@ -215,6 +223,14 @@ class ProductAdminController extends Controller
         // Handle image upload with custom filename
         if ($request->hasFile('image')) {
             $image = $request->file('image');
+            
+            // Manual validation for image type
+            $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+            if (!in_array($image->getMimeType(), $allowedMimes)) {
+                return redirect()->back()
+                    ->withErrors(['image' => 'File harus berupa gambar (JPEG, PNG, JPG, atau GIF)'])
+                    ->withInput();
+            }
             
             \Log::info('Update - Product image upload detected', [
                 'original_name' => $image->getClientOriginalName(),
