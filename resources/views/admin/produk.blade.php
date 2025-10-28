@@ -432,9 +432,14 @@
             },
             body: formData
           })
-          .then(response => response.json())
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.json();
+          })
           .then(data => {
-            if (data.success || response.ok) {
+            if (data.success) {
               showAlertModal('Berhasil', 'Produk berhasil dihapus!', 'success', () => {
                 location.reload();
               });
@@ -453,15 +458,25 @@
     document.getElementById('productForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       
+      console.log('Form submit started');
+      
       const productId = document.getElementById('productId').value;
       let url = '{{ route("produk.store") }}';
       
       const formData = new FormData(document.getElementById('productForm'));
       
+      // Log form data for debugging
+      console.log('Form data entries:');
+      for (let [key, value] of formData.entries()) {
+        console.log(key + ':', value instanceof File ? value.name : value);
+      }
+      
       if (currentMode === 'edit' && productId) {
         url = `/produk/${productId}`;
         formData.append('_method', 'PUT');
       }
+      
+      console.log('Submitting to:', url);
       
       try {
         const response = await fetch(url, {
@@ -473,7 +488,11 @@
           body: formData
         });
 
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        
         const data = await response.json();
+        console.log('Response data:', data);
         
         closeProductModal();
         
@@ -484,14 +503,15 @@
             });
           } else {
             const errorMsg = data.error || data.message || 'Terjadi kesalahan';
+            console.error('Error from server:', errorMsg, data.errors);
             showAlertModal('Error', errorMsg, 'error');
           }
         }, 300);
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Fetch error:', error);
         closeProductModal();
         setTimeout(() => {
-          showAlertModal('Error', 'Terjadi kesalahan saat menyimpan produk', 'error');
+          showAlertModal('Error', 'Terjadi kesalahan saat menyimpan produk: ' + error.message, 'error');
         }, 300);
       }
     });
