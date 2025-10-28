@@ -497,8 +497,8 @@
         // Close modal first
         closeProductModal();
         
-        // Check response status
-        if (response.ok && response.status === 201) {
+        // Check response status - accept both 200 and 201 as success
+        if (response.ok && (response.status === 200 || response.status === 201) && data.success) {
           // Success - show success message and reload
           setTimeout(() => {
             showAlertModal('Berhasil', data.success || 'Produk berhasil disimpan!', 'success', () => {

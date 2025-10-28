@@ -118,7 +118,7 @@ class ProductAdminController extends Controller
             return response()->json([
                 'success' => 'Produk berhasil ditambahkan!',
                 'product' => $product
-            ], 201)->header('Content-Type', 'application/json');
+            ], 200);
             
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
