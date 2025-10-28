@@ -87,31 +87,40 @@ class CardAdminController extends Controller
                 
                 // Check if file exists, add counter if needed
                 $counter = 1;
-                while (\Storage::disk('public')->exists('cards/' . $filename)) {
+                $finalPath = $cardsDir . '/' . $filename;
+                while (file_exists($finalPath)) {
                     $filename = 'card-' . $slug . '-' . $counter . '.' . $extension;
+                    $finalPath = $cardsDir . '/' . $filename;
                     $counter++;
                 }
                 
-                \Log::info('Store - Storing image', ['filename' => $filename, 'disk' => 'public']);
-                $path = $image->storeAs('cards', $filename, 'public');
-                
-                // Verify file was stored and get actual size
-                $fullPath = $basePath . '/' . $path;
-                $fileSize = file_exists($fullPath) ? filesize($fullPath) : 0;
-                
-                \Log::info('Store - Image stored result', [
-                    'path' => $path,
-                    'full_path' => $fullPath,
-                    'exists' => file_exists($fullPath),
-                    'size' => $fileSize,
-                    'original_size' => $image->getSize()
+                \Log::info('Store - Moving image file', [
+                    'filename' => $filename, 
+                    'destination' => $finalPath,
+                    'tmp_file' => $image->path(),
+                    'tmp_size' => filesize($image->path())
                 ]);
                 
-                if ($fileSize === 0 && file_exists($fullPath)) {
-                    \Log::error('Store - File exists but is EMPTY!');
+                // Use move() for more reliable upload on Vercel
+                if ($image->move($cardsDir, $filename)) {
+                    $path = 'cards/' . $filename;
+                    $fileSize = file_exists($finalPath) ? filesize($finalPath) : 0;
+                    
+                    \Log::info('Store - Image moved successfully', [
+                        'path' => $path,
+                        'full_path' => $finalPath,
+                        'final_size' => $fileSize
+                    ]);
+                    
+                    if ($fileSize === 0) {
+                        \Log::error('Store - WARNING: File size is 0 after move!');
+                    }
+                    
+                    $validated['image'] = $path;
+                } else {
+                    \Log::error('Store - Failed to move uploaded file');
+                    return response()->json(['error' => 'Gagal menyimpan file gambar'], 500);
                 }
-                
-                $validated['image'] = $path; // Store as "cards/filename.ext"
             } else {
                 \Log::info('Store - No image file in request');
             }
@@ -207,8 +216,19 @@ class CardAdminController extends Controller
             
             // Delete old image
             if ($card->image) {
-                \Storage::disk('public')->delete($card->image);
-                \Log::info('Update - Deleted old image', ['path' => $card->image]);
+                $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
+                $oldImagePath = $basePath . '/' . $card->image;
+                if (file_exists($oldImagePath)) {
+                    unlink($oldImagePath);
+                    \Log::info('Update - Deleted old image', ['path' => $card->image]);
+                }
+            }
+            
+            // Ensure cards directory exists
+            $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
+            $cardsDir = $basePath . '/cards';
+            if (!file_exists($cardsDir)) {
+                mkdir($cardsDir, 0755, true);
             }
             
             // Generate custom filename: card-{slug}.{extension}
@@ -218,16 +238,40 @@ class CardAdminController extends Controller
             
             // Check if file exists, add counter if needed
             $counter = 1;
-            while (\Storage::disk('public')->exists('cards/' . $filename) && $filename !== basename($card->image)) {
+            $finalPath = $cardsDir . '/' . $filename;
+            while (file_exists($finalPath) && $filename !== basename($card->image)) {
                 $filename = 'card-' . $slug . '-' . $counter . '.' . $extension;
+                $finalPath = $cardsDir . '/' . $filename;
                 $counter++;
             }
             
-            \Log::info('Update - Storing image', ['filename' => $filename]);
-            $path = $image->storeAs('cards', $filename, 'public');
-            \Log::info('Update - Image stored', ['path' => $path, 'size' => filesize(storage_path('app/public/' . $path))]);
+            \Log::info('Update - Moving image file', [
+                'filename' => $filename,
+                'destination' => $finalPath,
+                'tmp_file' => $image->path(),
+                'tmp_size' => filesize($image->path())
+            ]);
             
-            $validated['image'] = $path;
+            // Use move() for more reliable upload on Vercel
+            if ($image->move($cardsDir, $filename)) {
+                $path = 'cards/' . $filename;
+                $fileSize = file_exists($finalPath) ? filesize($finalPath) : 0;
+                
+                \Log::info('Update - Image moved successfully', [
+                    'path' => $path,
+                    'full_path' => $finalPath,
+                    'final_size' => $fileSize
+                ]);
+                
+                if ($fileSize === 0) {
+                    \Log::error('Update - WARNING: File size is 0 after move!');
+                }
+                
+                $validated['image'] = $path;
+            } else {
+                \Log::error('Update - Failed to move uploaded file');
+                return response()->json(['error' => 'Gagal menyimpan file gambar'], 500);
+            }
         } else {
             \Log::info('Update - No image file in request');
         }
