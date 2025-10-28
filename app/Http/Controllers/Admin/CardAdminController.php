@@ -82,40 +82,12 @@ class CardAdminController extends Controller
                 $extension = $image->getClientOriginalExtension();
                 $filename = 'card-' . $slug . '.' . $extension;
                 
-                // Save to public/storage (same for all environments)
-                $basePath = public_path('storage');
+                // Store image in base64 format in database for Vercel compatibility
+                $imageContent = file_get_contents($image->getRealPath());
+                $base64Image = base64_encode($imageContent);
+                $mimeType = $image->getMimeType();
                 
-                try {
-                    // Ensure base directory exists
-                    if (!is_dir($basePath)) {
-                        if (!mkdir($basePath, 0777, true)) {
-                            return response()->json(['error' => 'Cannot create directory: ' . $basePath], 500);
-                        }
-                    }
-                    
-                    // Save file directly
-                    $filePath = $basePath . '/' . $filename;
-                    $imageContent = file_get_contents($image->getRealPath());
-                    $bytesWritten = file_put_contents($filePath, $imageContent);
-                    
-                    if ($bytesWritten === false) {
-                        return response()->json(['error' => 'Failed to write file to: ' . $filePath], 500);
-                    }
-                    
-                    // Verify
-                    if (!file_exists($filePath)) {
-                        return response()->json(['error' => 'File not found after save: ' . $filePath], 500);
-                    }
-                    
-                    $fileSize = filesize($filePath);
-                    if ($fileSize === 0) {
-                        return response()->json(['error' => 'File is empty after save'], 500);
-                    }
-                    
-                    $validated['image'] = $filename;
-                } catch (\Exception $e) {
-                    return response()->json(['error' => 'Upload error: ' . $e->getMessage()], 500);
-                }
+                $validated['image'] = 'data:' . $mimeType . ';base64,' . $base64Image;
             }
 
             // Generate slug from title
@@ -126,8 +98,8 @@ class CardAdminController extends Controller
             
             // Add image URL to response
             $cardData = $card->toArray();
-            if ($card->image) {
-                $cardData['image_url'] = asset('storage/' . $card->image);
+            if ($card->image && strpos($card->image, 'data:') === 0) {
+                $cardData['image_url'] = $card->image;  // Already a data URL
             }
 
             return response()->json([
@@ -207,51 +179,12 @@ class CardAdminController extends Controller
                 return response()->json(['error' => 'Gambar harus berukuran 1080x1080 pixel'], 422);
             }
             
-            // Delete old image
-            $basePath = public_path('storage');
-            if ($card->image) {
-                $oldImagePath = $basePath . '/' . $card->image;
-                if (file_exists($oldImagePath)) {
-                    unlink($oldImagePath);
-                }
-            }
+            // Store image in base64 format in database for Vercel compatibility
+            $imageContent = file_get_contents($image->getRealPath());
+            $base64Image = base64_encode($imageContent);
+            $mimeType = $image->getMimeType();
             
-            // Generate filename: card-{slug}.{extension}
-            $slug = Str::slug($validated['title']);
-            $extension = $image->getClientOriginalExtension();
-            $filename = 'card-' . $slug . '.' . $extension;
-            
-            try {
-                // Ensure base directory exists
-                if (!is_dir($basePath)) {
-                    if (!mkdir($basePath, 0777, true)) {
-                        return response()->json(['error' => 'Cannot create directory: ' . $basePath], 500);
-                    }
-                }
-                
-                // Save file directly
-                $filePath = $basePath . '/' . $filename;
-                $imageContent = file_get_contents($image->getRealPath());
-                $bytesWritten = file_put_contents($filePath, $imageContent);
-                
-                if ($bytesWritten === false) {
-                    return response()->json(['error' => 'Failed to write file to: ' . $filePath], 500);
-                }
-                
-                // Verify
-                if (!file_exists($filePath)) {
-                    return response()->json(['error' => 'File not found after save: ' . $filePath], 500);
-                }
-                
-                $fileSize = filesize($filePath);
-                if ($fileSize === 0) {
-                    return response()->json(['error' => 'File is empty after save'], 500);
-                }
-                
-                $validated['image'] = $filename;
-            } catch (\Exception $e) {
-                return response()->json(['error' => 'Upload error: ' . $e->getMessage()], 500);
-            }
+            $validated['image'] = 'data:' . $mimeType . ';base64,' . $base64Image;
         }
 
         // Update slug if title changed
@@ -263,8 +196,8 @@ class CardAdminController extends Controller
         
         // Add image URL to response
         $cardData = $card->fresh()->toArray();
-        if ($card->image) {
-            $cardData['image_url'] = asset('storage/' . $card->image);
+        if ($card->image && strpos($card->image, 'data:') === 0) {
+            $cardData['image_url'] = $card->image;  // Already a data URL
         }
 
         return response()->json(['success' => 'Card berhasil diperbarui', 'card' => $cardData])
