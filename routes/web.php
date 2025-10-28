@@ -33,8 +33,8 @@ Route::get('/debug-auth', function (Illuminate\Http\Request $request) {
     ]);
 });
 
-// Admin Routes - Authenticated Users  
-Route::middleware('auth')->group(function () {
+// Admin Routes - OPSI A: Auto-login di production, normal auth di local
+Route::middleware('skip.auth.production')->group(function () {
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
     
     // Admin Product Management
