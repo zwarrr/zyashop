@@ -15,38 +15,6 @@ Route::get('/cards/{category}', [ProductController::class, 'showCards'])->name('
 Route::get('/card/{cardId}/products', [ProductController::class, 'showProductsByCard'])->name('card.products');
 Route::get('/products/{type}', [ProductController::class, 'showProductsByType'])->name('products.type');
 
-// Card Image Route - Serve base64 images as proper image response
-Route::get('/api/card-image/{id}', function (Illuminate\Http\Request $request, $id) {
-    $card = \App\Models\Card::find($id);
-    
-    if (!$card || !$card->image) {
-        return response()->file(public_path('img/placeholder.png'));
-    }
-    
-    // If it's a data URL, parse and return the image
-    if (strpos($card->image, 'data:') === 0) {
-        try {
-            preg_match('/data:image\/(\w+);base64,(.+)/', $card->image, $matches);
-            if (isset($matches[2])) {
-                $mimeType = 'image/' . $matches[1];
-                $imageData = base64_decode($matches[2], true);
-                
-                if ($imageData === false) {
-                    return response()->file(public_path('img/placeholder.png'));
-                }
-                
-                return response($imageData)
-                    ->header('Content-Type', $mimeType)
-                    ->header('Cache-Control', 'public, max-age=31536000');
-            }
-        } catch (\Exception $e) {
-            return response()->file(public_path('img/placeholder.png'));
-        }
-    }
-    
-    return response()->file(public_path('img/placeholder.png'));
-})->name('card.image');
-
 // Auth Routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
