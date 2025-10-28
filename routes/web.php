@@ -15,16 +15,24 @@ Route::get('/cards/{category}', [ProductController::class, 'showCards'])->name('
 Route::get('/card/{cardId}/products', [ProductController::class, 'showProductsByCard'])->name('card.products');
 Route::get('/products/{type}', [ProductController::class, 'showProductsByType'])->name('products.type');
 
-// Image Serving Route - SIMPLE VERSION
-Route::get('/storage/{filename}', function ($filename) {
+// Image Serving Route - Support both with/without subfolder
+Route::get('/storage/{path}', function ($path) {
     $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
-    $filePath = $basePath . '/' . $filename;
     
-    if (!file_exists($filePath)) {
-        return response()->json(['error' => 'File not found: ' . $filename], 404);
+    // Try direct path first (new format)
+    $filePath = $basePath . '/' . $path;
+    
+    // If not found and path has subfolder, try without subfolder (fallback)
+    if (!file_exists($filePath) && strpos($path, '/') !== false) {
+        $filename = basename($path);
+        $filePath = $basePath . '/' . $filename;
     }
     
-    $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+    if (!file_exists($filePath)) {
+        return response()->json(['error' => 'File not found: ' . $path], 404);
+    }
+    
+    $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
     $mimeTypes = [
         'jpg' => 'image/jpeg',
         'jpeg' => 'image/jpeg',
@@ -38,6 +46,19 @@ Route::get('/storage/{filename}', function ($filename) {
     return response()->file($filePath, [
         'Content-Type' => $mimeType,
         'Cache-Control' => 'public, max-age=31536000',
+    ]);
+})->where('path', '.*');
+
+// Fix database image paths (run once)
+Route::get('/fix-image-paths', function () {
+    $updated = \DB::table('cards')
+        ->where('image', 'like', 'cards/%')
+        ->update(['image' => \DB::raw("REPLACE(image, 'cards/', '')")]);
+    
+    return response()->json([
+        'success' => true,
+        'message' => 'Fixed image paths',
+        'updated_rows' => $updated
     ]);
 });
 
