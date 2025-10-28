@@ -181,7 +181,7 @@
       </div>
 
       <!-- Modal Body - Scrollable -->
-      <form id="productForm" method="POST" action="{{ route('produk.store') }}" class="flex-1 overflow-y-auto p-5" enctype="multipart/form-data">
+      <form id="productForm" class="flex-1 overflow-y-auto p-5" enctype="multipart/form-data">
         @csrf
         <input type="hidden" id="productId" name="product_id">
         <input type="hidden" id="formMethod" name="_method" value="POST">
@@ -453,20 +453,47 @@
     document.getElementById('productForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       
-      const form = document.getElementById('productForm');
       const productId = document.getElementById('productId').value;
+      let url = '{{ route("produk.store") }}';
       
-      // Set form action based on mode
+      const formData = new FormData(document.getElementById('productForm'));
+      
       if (currentMode === 'edit' && productId) {
-        form.action = `/produk/${productId}`;
-        document.getElementById('formMethod').value = 'PUT';
-      } else {
-        form.action = '{{ route("produk.store") }}';
-        document.getElementById('formMethod').value = 'POST';
+        url = `/produk/${productId}`;
+        formData.append('_method', 'PUT');
       }
       
-      // Submit form traditionally (not AJAX) - more reliable for file uploads
-      form.submit();
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+            // NO 'Content-Type' header! Let browser set it automatically with boundary
+          },
+          body: formData
+        });
+
+        const data = await response.json();
+        
+        closeProductModal();
+        
+        setTimeout(() => {
+          if (response.ok) {
+            showAlertModal('Berhasil', data.success || 'Produk berhasil disimpan!', 'success', () => {
+              location.reload();
+            });
+          } else {
+            const errorMsg = data.error || data.message || 'Terjadi kesalahan';
+            showAlertModal('Error', errorMsg, 'error');
+          }
+        }, 300);
+      } catch (error) {
+        console.error('Error:', error);
+        closeProductModal();
+        setTimeout(() => {
+          showAlertModal('Error', 'Terjadi kesalahan saat menyimpan produk', 'error');
+        }, 300);
+      }
     });
 
     // Close modal when clicking outside

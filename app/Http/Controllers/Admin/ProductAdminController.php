@@ -65,7 +65,7 @@ class ProductAdminController extends Controller
             'title' => 'required|string|max:255',
             'card_id' => 'required|exists:cards,id',
             'description' => 'nullable|string',
-            'image' => 'nullable|file|max:10240', // Simplified validation
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
             'status' => 'required|in:active,inactive,coming_soon',
             'link_shopee' => 'nullable|url',
             'link_tiktok' => 'nullable|url',
@@ -82,14 +82,6 @@ class ProductAdminController extends Controller
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
                 
-                // Manual validation for image type
-                $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
-                if (!in_array($image->getMimeType(), $allowedMimes)) {
-                    return redirect()->back()
-                        ->withErrors(['image' => 'File harus berupa gambar (JPEG, PNG, JPG, atau GIF)'])
-                        ->withInput();
-                }
-                
                 \Log::info('Store - Product image upload detected', [
                     'original_name' => $image->getClientOriginalName(),
                     'size' => $image->getSize(),
@@ -98,9 +90,7 @@ class ProductAdminController extends Controller
                 
                 // Check if image is valid
                 if (!$image->isValid()) {
-                    return redirect()->back()
-                        ->withErrors(['image' => 'File gambar tidak valid'])
-                        ->withInput();
+                    return response()->json(['error' => 'File gambar tidak valid'], 422);
                 }
                 
                 // Store image in base64 format in database for Vercel compatibility
@@ -125,18 +115,21 @@ class ProductAdminController extends Controller
                 'image_url_starts_with' => $product->image_url ? substr($product->image_url, 0, 30) : 'null'
             ]);
             
-            return redirect()->route('produk.index')
-                ->with('success', 'Produk berhasil ditambahkan!');
+            return response()->json([
+                'success' => 'Produk berhasil ditambahkan!',
+                'product' => $product
+            ], 201)->header('Content-Type', 'application/json');
             
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return redirect()->back()
-                ->withErrors($e->errors())
-                ->withInput();
+            return response()->json([
+                'error' => 'Validasi gagal',
+                'errors' => $e->errors()
+            ], 422)->header('Content-Type', 'application/json');
         } catch (\Exception $e) {
             \Log::error('Product store error: ' . $e->getMessage());
-            return redirect()->back()
-                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage())
-                ->withInput();
+            return response()->json([
+                'error' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500)->header('Content-Type', 'application/json');
         }
     }
 
@@ -224,14 +217,6 @@ class ProductAdminController extends Controller
         if ($request->hasFile('image')) {
             $image = $request->file('image');
             
-            // Manual validation for image type
-            $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
-            if (!in_array($image->getMimeType(), $allowedMimes)) {
-                return redirect()->back()
-                    ->withErrors(['image' => 'File harus berupa gambar (JPEG, PNG, JPG, atau GIF)'])
-                    ->withInput();
-            }
-            
             \Log::info('Update - Product image upload detected', [
                 'original_name' => $image->getClientOriginalName(),
                 'size' => $image->getSize(),
@@ -264,8 +249,8 @@ class ProductAdminController extends Controller
             'title' => $product->title
         ]);
 
-        return redirect()->route('produk.index')
-            ->with('success', 'Produk berhasil diperbarui!');
+        return response()->json(['success' => 'Produk berhasil diperbarui!', 'product' => $product])
+            ->header('Content-Type', 'application/json');
     }
 
     /**
