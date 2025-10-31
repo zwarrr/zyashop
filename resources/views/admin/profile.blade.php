@@ -416,23 +416,32 @@
     
     const formData = new FormData(e.target);
     
+    console.log('ProfileForm submit:', {
+      hasImage: !!document.getElementById('profileImage').files[0],
+      imageFile: document.getElementById('profileImage').files[0]?.name,
+      formDataKeys: Array.from(formData.keys())
+    });
+    
     const response = await fetch('{{ route("profile.update") }}', {
       method: 'POST',
       headers: {
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
         'Accept': 'application/json',
       },
-      body: formData
+      body: formData  // FormData automatically sets Content-Type with boundary
     });
 
     closeProfileModal();
     
     setTimeout(async () => {
       if (response.ok) {
+        const result = await response.json();
+        console.log('Profile update success:', result);
         showAlertModal('Berhasil', 'Profile berhasil diperbarui!', 'success', () => location.reload());
       } else {
         const errors = await response.json();
-        showAlertModal('Error', errors.message || 'Terjadi kesalahan', 'error');
+        console.error('Profile update error:', errors);
+        showAlertModal('Error', errors.error || errors.message || 'Terjadi kesalahan', 'error');
       }
     }, 300);
   });

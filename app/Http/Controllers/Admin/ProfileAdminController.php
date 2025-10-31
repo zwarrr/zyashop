@@ -34,6 +34,12 @@ class ProfileAdminController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
+        \Log::info('ProfileAdminController - Update request received', [
+            'has_file' => $request->hasFile('profile_image'),
+            'all_files' => $request->files->keys(),
+            'all_input_keys' => $request->keys()
+        ]);
+
         $validated = $request->validate([
             'username' => 'required|string|max:50|alpha_dash',
             'display_name' => 'required|string|max:255',
@@ -61,7 +67,8 @@ class ProfileAdminController extends Controller
             \Log::info('Update - Profile image upload detected', [
                 'original_name' => $image->getClientOriginalName(),
                 'size' => $image->getSize(),
-                'mime' => $image->getMimeType()
+                'mime' => $image->getMimeType(),
+                'is_valid' => $image->isValid()
             ]);
             
             // Check if image is valid
@@ -78,11 +85,20 @@ class ProfileAdminController extends Controller
             
             \Log::info('Update - Profile image stored as base64', [
                 'image_size_bytes' => strlen($profile->profile_image),
-                'mime_type' => $mimeType
+                'mime_type' => $mimeType,
+                'first_100_chars' => substr($profile->profile_image, 0, 100)
             ]);
+        } else {
+            \Log::info('Update - No image file provided in request');
         }
 
         $profile->save();
+
+        \Log::info('Update - Profile saved successfully', [
+            'profile_id' => $profile->id,
+            'has_image' => !empty($profile->profile_image),
+            'image_length' => strlen($profile->profile_image ?? '')
+        ]);
 
         return response()->json(['success' => 'Profile berhasil diperbarui!'], 200);
     }
