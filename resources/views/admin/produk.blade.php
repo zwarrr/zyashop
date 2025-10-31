@@ -95,9 +95,9 @@
           </div>
         </div>
 
-        <!-- Products Table -->
+        <!-- Products Table - Loaded via AJAX to avoid large payload -->
         <div class="bg-white rounded-xl shadow border border-gray-200">
-          <div class="table-wrapper">
+          <div id="productsTableContainer" class="table-wrapper">
             <table class="w-full">
               <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
@@ -107,55 +107,15 @@
                   <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700">Aksi</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-200">
-                @forelse($products as $product)
-                <tr class="hover:bg-gray-50 transition duration-200">
-                  <td class="px-6 py-4">
-                    <div class="flex items-center gap-3">
-                      <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0" data-product-id="{{ $product->id }}" data-has-image="{{ !empty($product->image) ? 'true' : 'false' }}">
-                        <svg class="feather text-gray-600" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg>
-                      </div>
-                      <div>
-                        <p class="font-medium text-black">{{ $product->title }}</p>
-                        <p class="text-xs text-gray-500">ID: {{ $product->id }}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 text-sm text-gray-700">{{ $product->card ? $product->card->title : '-' }}</td>
-                  <td class="px-6 py-4">
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
-                      @if($product->status === 'active') bg-green-100 text-green-700
-                      @elseif($product->status === 'inactive') bg-gray-100 text-gray-700
-                      @else bg-yellow-100 text-yellow-700
-                      @endif">
-                      {{ ucfirst($product->status) }}
-                    </span>
-                  </td>
-                  <td class="px-6 py-4 text-center">
-                    <div class="relative inline-block text-left">
-                      <button onclick="toggleDropdown({{ $product->id }})" class="p-2 hover:bg-gray-100 rounded-lg transition duration-200" title="Aksi">
-                        <svg class="feather text-gray-600" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
-                      </button>
-                      <div id="dropdown-{{ $product->id }}" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
-                        <button onclick="openProductModal('edit', {{ $product->id }}); toggleDropdown({{ $product->id }})" class="w-full flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-gray-50 text-sm transition duration-200 text-left rounded-t-lg">
-                          <svg class="feather" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                          Edit
-                        </button>
-                        <button onclick="deleteProduct({{ $product->id }}); toggleDropdown({{ $product->id }})" class="w-full flex items-center gap-2 px-4 py-3 text-red-600 hover:bg-red-50 text-sm transition duration-200 text-left rounded-b-lg">
-                          <svg class="feather" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                          Hapus
-                        </button>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-                @empty
+              <tbody id="productsTableBody" class="divide-y divide-gray-200">
                 <tr>
                   <td colspan="4" class="px-6 py-8 text-center text-gray-500">
-                    Belum ada produk. <a href="{{ route('produk.create') }}" class="text-black font-semibold hover:underline">Buat produk baru</a>
+                    <div class="inline-flex items-center gap-2">
+                      <div class="w-4 h-4 border-2 border-gray-300 border-t-black rounded-full animate-spin"></div>
+                      Loading products...
+                    </div>
                   </td>
                 </tr>
-                @endforelse
               </tbody>
             </table>
           </div>
@@ -287,7 +247,104 @@
     let currentMode = 'create';
     let allCards = {!! json_encode($cards) !!};
 
-    // Toggle Dropdown - Make it globally accessible
+    // Load products table via AJAX after page load
+    document.addEventListener('DOMContentLoaded', function() {
+      loadProductsTable();
+    });
+
+    function loadProductsTable() {
+      const tableBody = document.getElementById('productsTableBody');
+      
+      fetch('/produk', {
+        headers: { 'Accept': 'application/json' }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (!data.products || data.products.length === 0) {
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                Belum ada produk. <button onclick="openProductModal()" class="text-black font-semibold hover:underline">Buat produk baru</button>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tableBody.innerHTML = data.products.map(product => `
+          <tr class="hover:bg-gray-50 transition duration-200">
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0" data-product-id="${product.id}" data-has-image="true">
+                  <svg class="feather text-gray-600" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg>
+                </div>
+                <div>
+                  <p class="font-medium text-black">${product.title}</p>
+                  <p class="text-xs text-gray-500">ID: ${product.id}</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 text-sm text-gray-700">${product.card_id ? allCards.find(c => c.id === product.card_id)?.title || '-' : '-'}</td>
+            <td class="px-6 py-4">
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                product.status === 'active' ? 'bg-green-100 text-green-700' :
+                product.status === 'inactive' ? 'bg-gray-100 text-gray-700' :
+                'bg-yellow-100 text-yellow-700'
+              }">
+                ${product.status.charAt(0).toUpperCase() + product.status.slice(1)}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-center">
+              <div class="relative inline-block text-left">
+                <button onclick="toggleDropdown(${product.id})" class="p-2 hover:bg-gray-100 rounded-lg transition duration-200" title="Aksi">
+                  <svg class="feather text-gray-600" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                </button>
+                <div id="dropdown-${product.id}" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                  <button onclick="openProductModal('edit', ${product.id}); toggleDropdown(${product.id})" class="w-full flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-gray-50 text-sm transition duration-200 text-left rounded-t-lg">
+                    <svg class="feather" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    Edit
+                  </button>
+                  <button onclick="deleteProduct(${product.id}); toggleDropdown(${product.id})" class="w-full flex items-center gap-2 px-4 py-3 text-red-600 hover:bg-red-50 text-sm transition duration-200 text-left rounded-b-lg">
+                    <svg class="feather" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                    Hapus
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+
+        // Load product thumbnails lazily
+        document.querySelectorAll('[data-product-id][data-has-image="true"]').forEach(el => {
+          const productId = el.getAttribute('data-product-id');
+          fetch(`/produk/${productId}`, {
+            headers: { 'Accept': 'application/json' }
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.product?.image) {
+              const img = document.createElement('img');
+              img.src = data.product.image;
+              img.alt = data.product.title || 'Product';
+              img.className = 'w-full h-full object-cover';
+              el.innerHTML = '';
+              el.appendChild(img);
+            }
+          })
+          .catch(err => console.warn('Could not load thumbnail for product ' + productId, err));
+        });
+      })
+      .catch(err => {
+        console.error('Error loading products:', err);
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+              Error loading products. Please refresh the page.
+            </td>
+          </tr>
+        `;
+      });
+    }
     window.toggleDropdown = function(id) {
       const dropdown = document.getElementById(`dropdown-${id}`);
       document.querySelectorAll('[id^="dropdown-"]').forEach(d => {
@@ -301,26 +358,6 @@
       if (!event.target.closest('[onclick^="toggleDropdown"]') && !event.target.closest('[id^="dropdown-"]')) {
         document.querySelectorAll('[id^="dropdown-"]').forEach(d => d.classList.add('hidden'));
       }
-    });
-
-    // Load product thumbnails lazily - only if they have images
-    document.querySelectorAll('[data-product-id][data-has-image="true"]').forEach(el => {
-      const productId = el.getAttribute('data-product-id');
-      fetch(`/produk/${productId}`, {
-        headers: { 'Accept': 'application/json' }
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.product?.image_url) {
-          const img = document.createElement('img');
-          img.src = data.product.image_url;
-          img.alt = data.product.title || 'Product';
-          img.className = 'w-full h-full object-cover';
-          el.innerHTML = '';
-          el.appendChild(img);
-        }
-      })
-      .catch(err => console.warn('Could not load thumbnail for product ' + productId, err));
     });
 
     // Preview image when file selected

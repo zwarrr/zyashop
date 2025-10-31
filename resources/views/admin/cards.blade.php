@@ -208,6 +208,93 @@
     let allCards = @json($cards ?? []);
     const allCategories = @json($categories ?? []);
 
+    // Load cards table via AJAX after page load
+    document.addEventListener('DOMContentLoaded', function() {
+      loadCardsTable();
+    });
+
+    function loadCardsTable() {
+      const tableBody = document.getElementById('cardsTableBody');
+      
+      fetch('/cards', {
+        headers: { 'Accept': 'application/json' }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (!data.cards || data.cards.length === 0) {
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                Belum ada card. <button onclick="openCardModal()" class="text-black font-semibold hover:underline">Buat yang baru</button>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tableBody.innerHTML = data.cards.map(card => `
+          <tr class="hover:bg-gray-50 transition duration-200">
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+                  <svg class="feather text-gray-600" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg>
+                </div>
+                <div>
+                  <p class="font-medium text-black">${card.title}</p>
+                  <p class="text-xs text-gray-500">ID: ${card.id}</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 text-sm text-gray-700">${card.category}</td>
+            <td class="px-6 py-4">
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                card.status === 'active' ? 'bg-green-100 text-green-700' :
+                'bg-gray-100 text-gray-700'
+              }">
+                ${card.status.charAt(0).toUpperCase() + card.status.slice(1)}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-center">
+              <div class="relative inline-block text-left">
+                <button onclick="toggleCardDropdown(${card.id})" class="p-2 hover:bg-gray-100 rounded-lg transition duration-200" title="Aksi">
+                  <svg class="feather text-gray-600" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                </button>
+                <div id="dropdown-${card.id}" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                  <button onclick="openCardModal('edit', ${card.id}); toggleCardDropdown(${card.id})" class="w-full flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-gray-50 text-sm transition duration-200 text-left rounded-t-lg">
+                    <svg class="feather" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    Edit
+                  </button>
+                  <button onclick="deleteCard(${card.id}); toggleCardDropdown(${card.id})" class="w-full flex items-center gap-2 px-4 py-3 text-red-600 hover:bg-red-50 text-sm transition duration-200 text-left rounded-b-lg">
+                    <svg class="feather" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                    Hapus
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      })
+      .catch(err => {
+        console.error('Error loading cards:', err);
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+              Error loading cards. Please refresh the page.
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    // Toggle card dropdown
+    function toggleCardDropdown(id) {
+      const dropdown = document.getElementById(`dropdown-${id}`);
+      document.querySelectorAll('[id^="dropdown-"]').forEach(d => {
+        if (d.id !== `dropdown-${id}`) d.classList.add('hidden');
+      });
+      dropdown.classList.toggle('hidden');
+    }
+
     // Preview image when file selected
     function previewCardImage(event) {
       const file = event.target.files[0];
@@ -266,10 +353,18 @@
       }
 
       tbody.innerHTML = allCards.map(card => {
-        // Handle image path
+        // Handle image path - check multiple possible fields
         let imageSrc = '';
         if (card.image_url) {
-          imageSrc = card.image_url;  // From API response
+          imageSrc = card.image_url;  // Already a data URL or full URL
+        } else if (card.image) {
+          // Check if it's already a data URL (base64)
+          if (card.image.startsWith('data:')) {
+            imageSrc = card.image;  // Use as-is
+          } else {
+            // Old format - filename
+            imageSrc = `/storage/${card.image}`;
+          }
         }
         
         console.log('Rendering card:', {
