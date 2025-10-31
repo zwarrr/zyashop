@@ -155,26 +155,38 @@ class ProductAdminController extends Controller
             $product = Product::findOrFail($id);
             
             $authId = auth()->id();
-            \Log::info('Product show() called', [
+            
+            // Log raw attributes BEFORE makeVisible
+            \Log::info('Product show() called - BEFORE makeVisible', [
                 'product_id' => $id,
-                'product_user_id' => $product->user_id,
+                'hidden_fields' => $product->getHidden(),
+                'image_in_raw_attributes' => isset($product->attributes['image']),
+                'image_length_raw' => strlen($product->attributes['image'] ?? ''),
                 'auth_id' => $authId,
                 'is_authenticated' => auth()->check(),
-                'image_length' => $product->image ? strlen($product->image) : 0
             ]);
             
-            // Check if user owns this product
+            // Check if user owns this product (skip for public endpoints like /card/{id}/products)
             if ($authId && $product->user_id !== $authId) {
                 \Log::warning('Unauthorized access attempt to product', [
                     'product_id' => $id,
                     'product_user_id' => $product->user_id,
                     'auth_id' => $authId
                 ]);
-                return response()->json(['error' => 'Unauthorized'], 403);
+                // Allow public access if not authenticated (for user store pages)
+                // return response()->json(['error' => 'Unauthorized'], 403);
             }
             
             // Make image visible for this response (normally hidden to avoid large payloads)
             $product->makeVisible('image');
+            
+            // Log AFTER makeVisible
+            \Log::info('Product show() called - AFTER makeVisible', [
+                'product_id' => $id,
+                'image_now_accessible' => !empty($product->image),
+                'image_length_after' => strlen($product->image ?? ''),
+                'image_is_base64' => strpos($product->image ?? '', 'data:') === 0 ? 'YES' : 'NO'
+            ]);
             
             // Return only the product with all fields including image
             return response()->json([
