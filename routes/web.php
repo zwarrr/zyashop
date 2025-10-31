@@ -14,7 +14,6 @@ Route::get('/product', [ProductController::class, 'index'])->name('product');
 Route::get('/cards-by-category/{category}', [ProductController::class, 'showCards'])->name('cards.show');
 Route::get('/card/{cardId}/products', [ProductController::class, 'showProductsByCard'])->name('card.products');
 Route::get('/products/{type}', [ProductController::class, 'showProductsByType'])->name('products.type');
-Route::get('/api/card/{cardId}/image', [ProductController::class, 'getCardImage'])->name('card.image');
 
 // Auth Routes
 Route::middleware('guest')->group(function () {
