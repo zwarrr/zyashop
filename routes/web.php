@@ -121,6 +121,33 @@ Route::get('/debug-all-products', function () {
     ]);
 });
 
+// Admin endpoint - Generate test images for products without images
+Route::get('/admin/generate-test-images', function () {
+    $productsWithoutImages = \App\Models\Product::whereNull('image')
+                                               ->orWhere('image', '')
+                                               ->limit(10)
+                                               ->get();
+    
+    $colors = ['FF6B6B', '4ECDC4', '45B7D1', 'FFA07A', '98D8C8'];
+    $updated = 0;
+    
+    foreach ($productsWithoutImages as $product) {
+        $color = $colors[$product->id % count($colors)];
+        $title = urlencode(substr($product->title, 0, 20));
+        // Create a placeholder image
+        $placeholderUrl = "https://via.placeholder.com/400x400/$color/FFFFFF?text=" . $title;
+        
+        // For now just log that we would update
+        \Log::info("Would add placeholder for product {$product->id}: {$product->title}");
+        $updated++;
+    }
+    
+    return response()->json([
+        'message' => "Found $updated products without images",
+        'count' => $updated
+    ]);
+});
+
 // Admin Routes - OPSI A: Auto-login di production, normal auth di local
 Route::middleware('skip.auth.production')->group(function () {
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
