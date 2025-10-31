@@ -159,7 +159,8 @@ class ProductAdminController extends Controller
                 'product_id' => $id,
                 'product_user_id' => $product->user_id,
                 'auth_id' => $authId,
-                'is_authenticated' => auth()->check()
+                'is_authenticated' => auth()->check(),
+                'image_length' => $product->image ? strlen($product->image) : 0
             ]);
             
             // Check if user owns this product
@@ -171,6 +172,9 @@ class ProductAdminController extends Controller
                 ]);
                 return response()->json(['error' => 'Unauthorized'], 403);
             }
+            
+            // Make image visible for this response (normally hidden to avoid large payloads)
+            $product->makeVisible('image');
             
             // Return only the product with all fields including image
             return response()->json([

@@ -260,6 +260,8 @@
       })
       .then(res => res.json())
       .then(data => {
+        console.log('Loaded products:', data.products);
+        
         if (!data.products || data.products.length === 0) {
           tableBody.innerHTML = `
             <tr>
@@ -317,21 +319,31 @@
         // Load product thumbnails lazily
         document.querySelectorAll('[data-product-id][data-has-image="true"]').forEach(el => {
           const productId = el.getAttribute('data-product-id');
+          console.log('Loading thumbnail for product:', productId);
+          
           fetch(`/produk/${productId}`, {
             headers: { 'Accept': 'application/json' }
           })
-          .then(res => res.json())
+          .then(res => {
+            if (!res.ok) throw new Error('Response status: ' + res.status);
+            return res.json();
+          })
           .then(data => {
+            console.log('Product data for', productId, ':', data);
+            
             if (data.product?.image) {
+              console.log('Image found for product', productId, '- loading image');
               const img = document.createElement('img');
               img.src = data.product.image;
               img.alt = data.product.title || 'Product';
               img.className = 'w-full h-full object-cover';
               el.innerHTML = '';
               el.appendChild(img);
+            } else {
+              console.warn('No image found for product', productId);
             }
           })
-          .catch(err => console.warn('Could not load thumbnail for product ' + productId, err));
+          .catch(err => console.error('Error loading thumbnail for product ' + productId + ':', err));
         });
       })
       .catch(err => {
