@@ -31,17 +31,22 @@ class ProductController extends Controller
 
         $userProfile = $user->profile;
         $userLinks = $user->links()->orderBy('order')->get();
+        
+        // EXCLUDE image from home view to avoid payload too large error
+        // Images will be loaded lazily in Blade template if needed
         $products = $user->products()
                         ->where('status', 'active')
-                        ->select('id', 'user_id', 'card_id', 'title', 'description', 'image', 'link_shopee', 'link_tiktok', 'price', 'range', 'stock', 'status', 'specifications', 'created_at', 'updated_at')
+                        ->select('id', 'user_id', 'card_id', 'title', 'description', 'link_shopee', 'link_tiktok', 'price', 'range', 'stock', 'status', 'specifications', 'created_at', 'updated_at')
                         ->get();
         
         // Eager load products untuk setiap card (untuk cek jumlah products)
+        // EXCLUDE image from cards to avoid payload explosion
         $cards = $user->cards()
                      ->where('status', 'active')
-                     ->select('id', 'user_id', 'title', 'category', 'image', 'slug', 'status', 'created_at', 'updated_at')
+                     ->select('id', 'user_id', 'title', 'category', 'slug', 'status', 'created_at', 'updated_at')
                      ->with(['products' => function($query) {
-                         $query->where('status', '!=', 'inactive');
+                         $query->where('status', '!=', 'inactive')
+                               ->select('id', 'user_id', 'card_id', 'title', 'description', 'link_shopee', 'link_tiktok', 'price', 'range', 'stock', 'status', 'specifications', 'created_at', 'updated_at');
                      }])
                      ->get();
         
@@ -64,15 +69,11 @@ class ProductController extends Controller
             return redirect()->route('home');
         }
 
+        // EXCLUDE image to avoid payload too large error
         $products = $user->products()
                         ->where('status', '!=', 'coming_soon')
-                        ->select('id', 'user_id', 'card_id', 'title', 'description', 'image', 'link_shopee', 'link_tiktok', 'price', 'range', 'stock', 'status', 'specifications', 'created_at', 'updated_at')
+                        ->select('id', 'user_id', 'card_id', 'title', 'description', 'link_shopee', 'link_tiktok', 'price', 'range', 'stock', 'status', 'specifications', 'created_at', 'updated_at')
                         ->paginate(12);
-        
-        // Make image visible for public view - iterate directly since it's paginated
-        foreach ($products as $product) {
-            $product->makeVisible('image');
-        }
         
         $userProfile = $user->profile;
         
@@ -94,16 +95,12 @@ class ProductController extends Controller
         }
 
         // Cari cards berdasarkan kategori (cards field)
+        // EXCLUDE image to avoid payload too large error
         $products = $user->cards()
                         ->where('category', $category)
                         ->where('status', 'active')
-                        ->select('id', 'user_id', 'title', 'category', 'image', 'slug', 'status', 'created_at', 'updated_at')
+                        ->select('id', 'user_id', 'title', 'category', 'slug', 'status', 'created_at', 'updated_at')
                         ->get();
-        
-        // Make image visible for public view - iterate directly
-        foreach ($products as $card) {
-            $card->makeVisible('image');
-        }
         
         // Convert to paginator for compatibility
         $perPage = 12;
