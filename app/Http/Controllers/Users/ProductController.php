@@ -33,8 +33,10 @@ class ProductController extends Controller
         $userLinks = $user->links()->orderBy('order')->get();
         $products = $user->products()->where('status', 'active')->get();
         
-        // Make image visible for public view
-        $products = $products->map(fn($p) => $p->makeVisible('image'));
+        // Make image visible for public view - makeVisible modifies the model and returns $this
+        foreach ($products as $product) {
+            $product->makeVisible('image');
+        }
         
         // Eager load products untuk setiap card (untuk cek jumlah products)
         $cards = $user->cards()
@@ -45,7 +47,9 @@ class ProductController extends Controller
                      ->get();
         
         // Make card images visible
-        $cards = $cards->map(fn($c) => $c->makeVisible('image'));
+        foreach ($cards as $card) {
+            $card->makeVisible('image');
+        }
         
         return view('zyashp', [
             'userProfile' => $userProfile,
@@ -70,14 +74,10 @@ class ProductController extends Controller
                         ->where('status', '!=', 'coming_soon')
                         ->paginate(12);
         
-        // Make image visible for public view
-        $products = $products->getCollection()->map(fn($p) => $p->makeVisible('image'));
-        $products = new \Illuminate\Pagination\Paginator(
-            $products,
-            request()->get('per_page', 12),
-            request()->get('page', 1),
-            ['path' => request()->url(), 'query' => request()->query()]
-        );
+        // Make image visible for public view - iterate directly since it's paginated
+        foreach ($products as $product) {
+            $product->makeVisible('image');
+        }
         
         $userProfile = $user->profile;
         
@@ -104,8 +104,10 @@ class ProductController extends Controller
                         ->where('status', 'active')
                         ->get();
         
-        // Make image visible for public view
-        $products = $products->map(fn($p) => $p->makeVisible('image'));
+        // Make image visible for public view - iterate directly
+        foreach ($products as $card) {
+            $card->makeVisible('image');
+        }
         
         // Convert to paginator for compatibility
         $perPage = 12;
@@ -148,8 +150,12 @@ class ProductController extends Controller
         // Ambil products yang memiliki card_id ini - PASTIKAN IMAGE VISIBLE
         $products = Product::where('card_id', $cardId)
                           ->where('status', '!=', 'inactive')
-                          ->get()
-                          ->map(fn($p) => $p->makeVisible('image'));
+                          ->get();
+        
+        // Make image visible - iterate directly to modify the collection
+        foreach ($products as $product) {
+            $product->makeVisible('image');
+        }
         
         // DEBUG: Log pertama product untuk check
         if ($products->count() > 0) {
@@ -204,8 +210,10 @@ class ProductController extends Controller
                           ->where($linkField, '!=', '')
                           ->get();
         
-        // Make image visible untuk public view
-        $products = $products->map(fn($p) => $p->makeVisible('image'));
+        // Make image visible untuk public view - iterate directly
+        foreach ($products as $product) {
+            $product->makeVisible('image');
+        }
         
         $userProfile = $user->profile;
         
