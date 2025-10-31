@@ -566,21 +566,32 @@
         
         const data = await response.json();
         console.log('Response data:', data);
+        console.log('Response data.success:', data.success);
         
         // Close modal first
         closeProductModal();
         
         // Check response status - accept both 200 and 201 as success
-        if (response.ok && (response.status === 200 || response.status === 201) && data.success) {
-          // Success - show success message and reload
-          setTimeout(() => {
-            showAlertModal('Berhasil', data.success || 'Produk berhasil disimpan!', 'success', () => {
-              location.reload();
-            });
-          }, 300);
+        if (response.ok && (response.status === 200 || response.status === 201)) {
+          if (data.success) {
+            // Success - show success message and reload
+            setTimeout(() => {
+              showAlertModal('Berhasil', data.success || 'Produk berhasil disimpan!', 'success', () => {
+                location.reload();
+              });
+            }, 300);
+          } else {
+            // Response OK but no success message
+            console.warn('Response OK but no data.success. Full response:', data);
+            setTimeout(() => {
+              showAlertModal('Berhasil', 'Produk berhasil disimpan!', 'success', () => {
+                location.reload();
+              });
+            }, 300);
+          }
         } else {
           // Error - show error message
-          let errorMsg = 'Terjadi kesalahan';
+          let errorMsg = 'Terjadi kesalahan (HTTP ' + response.status + ')';
           
           if (data.error) {
             errorMsg = data.error;
@@ -593,6 +604,7 @@
           
           console.error('Server error:', {
             status: response.status,
+            statusText: response.statusText,
             message: errorMsg,
             fullData: data
           });
