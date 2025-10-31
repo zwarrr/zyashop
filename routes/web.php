@@ -33,6 +33,33 @@ Route::get('/debug-auth', function (Illuminate\Http\Request $request) {
     ]);
 });
 
+// Debug route for product images
+Route::get('/debug-products', function () {
+    $products = \App\Models\Product::where('status', '!=', 'inactive')->limit(3)->get();
+    
+    $result = [];
+    foreach ($products as $p) {
+        $result[] = [
+            'id' => $p->id,
+            'title' => $p->title,
+            'card_id' => $p->card_id,
+            'image_exists_in_raw_attributes' => isset($p->attributes['image']),
+            'image_length_raw' => strlen($p->attributes['image'] ?? ''),
+            'image_accessible_via_hidden' => false,
+            'image_after_makeVisible' => false
+        ];
+        
+        // Try via makeVisible
+        $p->makeVisible('image');
+        $result[count($result) - 1]['image_accessible_via_hidden'] = !empty($p->image);
+        $result[count($result) - 1]['image_length_after_makeVisible'] = strlen($p->image ?? '');
+        $result[count($result) - 1]['image_is_base64'] = strpos($p->image ?? '', 'data:') === 0;
+        $result[count($result) - 1]['image_preview'] = substr($p->image ?? '', 0, 100);
+    }
+    
+    return response()->json($result);
+});
+
 // Admin Routes - OPSI A: Auto-login di production, normal auth di local
 Route::middleware('skip.auth.production')->group(function () {
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
