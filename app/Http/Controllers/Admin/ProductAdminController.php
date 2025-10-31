@@ -31,7 +31,8 @@ class ProductAdminController extends Controller
             return response()->json(['products' => $products]);
         }
 
-        $products = $user->products()->paginate(10);
+        // Eager load card relationship to avoid N+1 queries
+        $products = $user->products()->with('card')->paginate(10);
         $cards = $user->cards()->where('status', 'active')->get();
         
         return view('admin.produk', [
