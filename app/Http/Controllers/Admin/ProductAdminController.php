@@ -101,10 +101,10 @@ class ProductAdminController extends Controller
                 $base64Image = base64_encode($imageContent);
                 $mimeType = $image->getMimeType();
                 
-                $validated['image_url'] = 'data:' . $mimeType . ';base64,' . $base64Image;
+                $validated['image'] = 'data:' . $mimeType . ';base64,' . $base64Image;
                 
                 \Log::info('Store - Product image converted to base64', [
-                    'base64_length' => strlen($validated['image_url']),
+                    'base64_length' => strlen($validated['image']),
                     'mime_type' => $mimeType
                 ]);
             }
@@ -113,9 +113,9 @@ class ProductAdminController extends Controller
             
             \Log::info('Product created successfully', [
                 'product_id' => $product->id,
-                'has_image_url' => !empty($product->image_url),
-                'image_url_length' => $product->image_url ? strlen($product->image_url) : 0,
-                'image_url_starts_with' => $product->image_url ? substr($product->image_url, 0, 30) : 'null'
+                'has_image' => !empty($product->image),
+                'image_length' => $product->image ? strlen($product->image) : 0,
+                'image_starts_with' => $product->image ? substr($product->image, 0, 30) : 'null'
             ]);
             
             // Return minimal response without base64 image to avoid payload too large error
@@ -276,10 +276,10 @@ class ProductAdminController extends Controller
             $base64Image = base64_encode($imageContent);
             $mimeType = $image->getMimeType();
             
-            $validated['image_url'] = 'data:' . $mimeType . ';base64,' . $base64Image;
+            $validated['image'] = 'data:' . $mimeType . ';base64,' . $base64Image;
             
             \Log::info('Update - Product image converted to base64', [
-                'base64_length' => strlen($validated['image_url']),
+                'base64_length' => strlen($validated['image']),
                 'mime_type' => $mimeType
             ]);
         }
@@ -291,9 +291,9 @@ class ProductAdminController extends Controller
         
         \Log::info('Product updated successfully', [
             'product_id' => $product->id,
-            'has_image_url' => !empty($product->image_url),
-            'image_url_length' => $product->image_url ? strlen($product->image_url) : 0,
-            'image_url_starts_with' => $product->image_url ? substr($product->image_url, 0, 50) : 'null',
+            'has_image' => !empty($product->image),
+            'image_length' => $product->image ? strlen($product->image) : 0,
+            'image_starts_with' => $product->image ? substr($product->image, 0, 50) : 'null',
             'title' => $product->title
         ]);
 

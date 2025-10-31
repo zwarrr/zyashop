@@ -14,7 +14,7 @@ class Product extends Model
         'card_id',
         'title',
         'description',
-        'image_url',
+        'image',
         'link_shopee',
         'link_tiktok',
         'price',
