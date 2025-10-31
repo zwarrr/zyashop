@@ -57,9 +57,9 @@ Route::middleware('skip.auth.production')->group(function () {
     
     // Cards Admin Management
     Route::get('/cards', [CardAdminController::class, 'index'])->name('cards');
-    Route::get('/cards/{id}', [CardAdminController::class, 'show'])->name('cards.show');
     Route::post('/cards', [CardAdminController::class, 'store'])->middleware('force.json')->name('cards.store');
     Route::get('/cards/{id}/edit', [CardAdminController::class, 'edit'])->name('cards.edit');
+    Route::get('/cards/{id}', [CardAdminController::class, 'show'])->name('cards.show');
     Route::put('/cards/{id}', [CardAdminController::class, 'update'])->middleware('force.json')->name('cards.update');
     Route::delete('/cards/{id}', [CardAdminController::class, 'destroy'])->middleware('force.json')->name('cards.destroy');
     
