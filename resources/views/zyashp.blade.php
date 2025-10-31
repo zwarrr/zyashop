@@ -223,14 +223,17 @@
          data-has-products="{{ $card->products()->where('status', '!=', 'inactive')->count() > 0 ? 'true' : 'false' }}"
          title="{{ $card->title }}">
         @php
+          // Get image from raw attributes since field is hidden in model
+          $cardImage = $card->attributes['image'] ?? null;
           $cardImageSrc = 'https://placehold.co/1080x1080?text=' . urlencode($card->title);
-          if (!empty($card->image)) {
-            if (strpos($card->image, 'data:') === 0) {
+          
+          if (!empty($cardImage)) {
+            if (strpos($cardImage, 'data:') === 0) {
               // Base64 image
-              $cardImageSrc = $card->image;
+              $cardImageSrc = $cardImage;
             } else {
               // File path
-              $cardImageSrc = asset('storage/' . $card->image);
+              $cardImageSrc = asset('storage/' . $cardImage);
             }
           }
         @endphp

@@ -69,14 +69,17 @@
       <div class="card-item rounded-lg overflow-hidden border border-gray-200 hover:border-black transition-colors" data-card="{{ $card->id }}">
         <div class="relative bg-gray-300 overflow-hidden" style="aspect-ratio: 1;">
           @php
+            // Get image from raw attributes since field is hidden in model
+            $cardImage = $card->attributes['image'] ?? null;
             $cardImageSrc = 'https://placehold.co/1080x1080?text=' . urlencode($card->title);
-            if (!empty($card->image)) {
-              if (strpos($card->image, 'data:') === 0) {
+            
+            if (!empty($cardImage)) {
+              if (strpos($cardImage, 'data:') === 0) {
                 // Base64 image
-                $cardImageSrc = $card->image;
+                $cardImageSrc = $cardImage;
               } else {
                 // File path
-                $cardImageSrc = asset('storage/' . $card->image);
+                $cardImageSrc = asset('storage/' . $cardImage);
               }
             }
           @endphp

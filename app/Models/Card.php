@@ -21,12 +21,14 @@ class Card extends Model
     // Hide image from serialization by default - too large with base64
     protected $hidden = ['image'];
 
-    // Add image_url to appends so it's automatically computed and included in JSON/array access
-    protected $appends = ['image_url'];
+    // DON'T auto-append image_url to every serialization - only compute when explicitly accessed
+    // This prevents payload explosion when cards are serialized to JSON
+    // protected $appends = ['image_url'];
 
     /**
      * Get the full URL for the card image using Attribute casting.
-     * This will be accessible as $card->image_url even though image is hidden
+     * This will be accessible as $card->image_url when explicitly accessed
+     * BUT will NOT be auto-serialized to JSON/array (unless in $appends)
      */
     protected function imageUrl(): Attribute
     {
