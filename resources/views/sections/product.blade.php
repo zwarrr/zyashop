@@ -44,15 +44,7 @@
       'productType' => $productType ?? null
     ])
 
-    <!-- DEBUG: Check what's in products -->
-    <script>
-      console.log('Products data:', @json($products));
-      @if($products->count() > 0)
-        console.log('First product:', @json($products[0]));
-        console.log('First product image field:', '{{ $products[0]->image ?? "NO IMAGE" }}');
-        console.log('First product has image property:', typeof '{{ $products[0]->image ?? null }}');
-      @endif
-    </script>
+
 
     <!-- Products Grid -->
     <section class="grid grid-cols-2 gap-3 sm:gap-6 mb-20">
@@ -63,17 +55,16 @@
         <!-- Card Item (from cards table) -->
         <a href="javascript:void(0)" class="product-card rounded-lg overflow-hidden border border-gray-200 hover:border-black transition-colors" data-product="{{ $product->id }}">
           <div class="relative bg-gray-300 overflow-hidden" style="aspect-ratio: 1;">
-            @php
-              $hasImage = !empty($product->image);
-              $isBase64 = $hasImage && strpos($product->image, 'data:') === 0;
-            @endphp
-            @if($hasImage && $isBase64)
-              <!-- Image is base64 data -->
-              <img src="{{ $product->image }}" alt="{{ $product->title }}" class="w-full h-full object-cover" onerror="console.log('Image failed to load for card', {{ $product->id }})">
-            @elseif($hasImage)
-              <!-- Image is file path -->
-              <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->title }}" class="w-full h-full object-cover" onerror="console.log('Image failed to load for card', {{ $product->id }})">
+            @if(!empty($product->image))
+              @if(strpos($product->image, 'data:') === 0)
+                <!-- Image is base64 data -->
+                <img src="{{ $product->image }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
+              @else
+                <!-- Image is file path -->
+                <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
+              @endif
             @else
+              <!-- No image - show placeholder -->
               <img src="https://placehold.co/1080x1080?text={{ urlencode($product->title) }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
             @endif
             <div class="absolute top-2 right-2 bg-black text-white px-2 sm:px-3 py-1 rounded-full text-xs font-semibold">
@@ -94,16 +85,10 @@
           // Tentukan link berdasarkan prioritas atau type
           $productLink = '#';
           if (isset($productType)) {
-            // Jika dari filter type (shopee/tiktok)
             $productLink = $productType === 'shopee' ? ($product->link_shopee ?? '#') : ($product->link_tiktok ?? '#');
           } else {
-            // Default: gunakan link yang tersedia (prioritas shopee)
             $productLink = $product->link_shopee ?? $product->link_tiktok ?? '#';
           }
-          
-          // Check image
-          $hasImage = !empty($product->image);
-          $isBase64 = $hasImage && strpos($product->image, 'data:') === 0;
         @endphp
         <a href="{{ $productLink }}" 
            target="_blank"
@@ -111,16 +96,16 @@
            class="product-card rounded-lg overflow-hidden border border-gray-200 hover:border-black transition-colors" 
            data-product="{{ $product->id }}">
           <div class="relative bg-gray-300 overflow-hidden" style="aspect-ratio: 1;">
-            <!-- DEBUG: Show what condition is triggered -->
-            <script>console.log('Product {{ $product->id }} - hasImage:', {{ $hasImage ? 'true' : 'false' }}, 'isBase64:', {{ $isBase64 ? 'true' : 'false' }}, 'image_length:', {{ strlen($product->image ?? '') }});</script>
-            
-            @if($hasImage && $isBase64)
-              <!-- Image is base64 data -->
-              <img src="{{ $product->image }}" alt="{{ $product->title }}" class="w-full h-full object-cover" onerror="console.log('Image failed to load for product', {{ $product->id }})">
-            @elseif($hasImage)
-              <!-- Image is file path -->
-              <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->title }}" class="w-full h-full object-cover" onerror="console.log('Image failed to load for product', {{ $product->id }})">
+            @if(!empty($product->image))
+              @if(strpos($product->image, 'data:') === 0)
+                <!-- Image is base64 data -->
+                <img src="{{ $product->image }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
+              @else
+                <!-- Image is file path -->
+                <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
+              @endif
             @else
+              <!-- No image - show placeholder -->
               <img src="https://placehold.co/400x400?text={{ urlencode($product->title) }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
             @endif
             <div class="absolute top-2 right-2 bg-black text-white px-2 sm:px-3 py-1 rounded-full text-xs font-semibold">
