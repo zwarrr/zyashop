@@ -588,6 +588,16 @@
         const data = await response.json();
         console.log('Response data:', data);
         console.log('Response data.success:', data.success);
+        console.log('Response data.errors:', data.errors);
+        
+        // If validation errors, log them BEFORE modal
+        if (data.errors) {
+          console.group('Validation Errors:');
+          for (const [field, messages] of Object.entries(data.errors)) {
+            console.error('  ' + field + ':', messages);
+          }
+          console.groupEnd();
+        }
         
         // Close modal first
         closeProductModal();
