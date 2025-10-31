@@ -257,16 +257,16 @@
               </span>
             </td>
             <td class="px-6 py-4 text-center">
-              <div class="relative inline-block text-left">
+              <div class="relative inline-block text-left group">
                 <button onclick="toggleCardDropdown(${card.id})" class="p-2 hover:bg-gray-100 rounded-lg transition duration-200" title="Aksi">
                   <svg class="feather text-gray-600" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
                 </button>
-                <div id="dropdown-${card.id}" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
-                  <button onclick="editCard(${card.id}); toggleCardDropdown(${card.id})" class="w-full flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-gray-50 text-sm transition duration-200 text-left rounded-t-lg">
+                <div id="dropdown-${card.id}" class="hidden absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-2xl border border-gray-200 z-[9999] will-change-transform">
+                  <button type="button" onclick="editCard(${card.id}); toggleCardDropdown(${card.id})" class="w-full flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-gray-50 text-sm transition duration-200 text-left rounded-t-lg">
                     <svg class="feather" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                     Edit
                   </button>
-                  <button onclick="deleteCard(${card.id}); toggleCardDropdown(${card.id})" class="w-full flex items-center gap-2 px-4 py-3 text-red-600 hover:bg-red-50 text-sm transition duration-200 text-left rounded-b-lg">
+                  <button type="button" onclick="deleteCard(${card.id}); toggleCardDropdown(${card.id})" class="w-full flex items-center gap-2 px-4 py-3 text-red-600 hover:bg-red-50 text-sm transition duration-200 text-left rounded-b-lg">
                     <svg class="feather" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                     Hapus
                   </button>
@@ -335,11 +335,25 @@
 
     // Toggle card dropdown
     function toggleCardDropdown(id) {
+      console.log('toggleCardDropdown called with id:', id);
       const dropdown = document.getElementById(`dropdown-${id}`);
+      console.log('Dropdown element:', dropdown);
+      
+      if (!dropdown) {
+        console.error('Dropdown not found for id:', id);
+        return;
+      }
+      
+      // Hide all other dropdowns
       document.querySelectorAll('[id^="dropdown-"]').forEach(d => {
-        if (d.id !== `dropdown-${id}`) d.classList.add('hidden');
+        if (d.id !== `dropdown-${id}`) {
+          d.classList.add('hidden');
+        }
       });
+      
+      // Toggle current dropdown
       dropdown.classList.toggle('hidden');
+      console.log('Dropdown toggled, now hidden:', dropdown.classList.contains('hidden'));
     }
 
     // Preview image when file selected
