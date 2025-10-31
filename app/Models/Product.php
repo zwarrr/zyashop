@@ -24,8 +24,8 @@ class Product extends Model
         'specifications'
     ];
 
-    // Hide image from serialization by default - too large with base64
-    protected $hidden = ['image'];
+    // Don't hide image - we'll manage visibility at controller level
+    // protected $hidden = ['image'];
 
     /**
      * Get the raw image from attributes directly

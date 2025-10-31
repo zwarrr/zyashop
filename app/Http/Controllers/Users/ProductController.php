@@ -31,25 +31,19 @@ class ProductController extends Controller
 
         $userProfile = $user->profile;
         $userLinks = $user->links()->orderBy('order')->get();
-        $products = $user->products()->where('status', 'active')->get();
-        
-        // Make image visible for public view - makeVisible modifies the model and returns $this
-        foreach ($products as $product) {
-            $product->makeVisible('image');
-        }
+        $products = $user->products()
+                        ->where('status', 'active')
+                        ->select('id', 'user_id', 'card_id', 'title', 'description', 'image', 'link_shopee', 'link_tiktok', 'price', 'range', 'stock', 'status', 'specifications', 'created_at', 'updated_at')
+                        ->get();
         
         // Eager load products untuk setiap card (untuk cek jumlah products)
         $cards = $user->cards()
                      ->where('status', 'active')
+                     ->select('id', 'user_id', 'title', 'category', 'image', 'slug', 'status', 'created_at', 'updated_at')
                      ->with(['products' => function($query) {
                          $query->where('status', '!=', 'inactive');
                      }])
                      ->get();
-        
-        // Make card images visible
-        foreach ($cards as $card) {
-            $card->makeVisible('image');
-        }
         
         return view('zyashp', [
             'userProfile' => $userProfile,
@@ -72,6 +66,7 @@ class ProductController extends Controller
 
         $products = $user->products()
                         ->where('status', '!=', 'coming_soon')
+                        ->select('id', 'user_id', 'card_id', 'title', 'description', 'image', 'link_shopee', 'link_tiktok', 'price', 'range', 'stock', 'status', 'specifications', 'created_at', 'updated_at')
                         ->paginate(12);
         
         // Make image visible for public view - iterate directly since it's paginated
@@ -102,6 +97,7 @@ class ProductController extends Controller
         $products = $user->cards()
                         ->where('category', $category)
                         ->where('status', 'active')
+                        ->select('id', 'user_id', 'title', 'category', 'image', 'slug', 'status', 'created_at', 'updated_at')
                         ->get();
         
         // Make image visible for public view - iterate directly
@@ -147,39 +143,22 @@ class ProductController extends Controller
         // Cari card by ID
         $card = Card::findOrFail($cardId);
         
-        // Ambil products yang memiliki card_id ini
+        // Ambil products dengan EXPLICIT select untuk include image
         $products = Product::where('card_id', $cardId)
                           ->where('status', '!=', 'inactive')
+                          ->select('id', 'user_id', 'card_id', 'title', 'description', 'image', 'link_shopee', 'link_tiktok', 'price', 'range', 'stock', 'status', 'specifications', 'created_at', 'updated_at')
                           ->get();
         
-        \Log::info('showProductsByCard - products fetched', [
+        \Log::info('showProductsByCard - products fetched with explicit select', [
             'count' => $products->count(),
-            'first_product_raw_image_exists' => $products->count() > 0 && isset($products[0]->attributes['image']),
-            'first_product_raw_image_length' => $products->count() > 0 ? strlen($products[0]->attributes['image'] ?? '') : 0
+            'first_product_has_image' => $products->count() > 0 && !empty($products[0]->image),
+            'first_product_image_length' => $products->count() > 0 ? strlen($products[0]->image ?? '') : 0
         ]);
-        
-        // Make images accessible - convert to array then back to collection with visible images
-        $productsArray = [];
-        foreach ($products as $product) {
-            // Make image visible explicitly
-            $product->makeVisible('image');
-            // Add to array
-            $productsArray[] = $product;
-        }
-        
-        // Convert back to collection
-        $products = collect($productsArray);
         
         // Jika tidak ada products, kirim flag hasNoProducts
         $hasNoProducts = $products->isEmpty();
         
         $userProfile = $user->profile;
-        
-        \Log::info('showProductsByCard - after makeVisible', [
-            'count' => $products->count(),
-            'first_product_image_accessible' => $products->count() > 0 && !empty($products[0]->image),
-            'first_product_image_length' => $products->count() > 0 ? strlen($products[0]->image ?? '') : 0
-        ]);
         
         // Render sections/product.blade dengan data products dari card
         return view('sections.product', [
@@ -215,6 +194,7 @@ class ProductController extends Controller
                           ->where('status', '!=', 'inactive')
                           ->whereNotNull($linkField)
                           ->where($linkField, '!=', '')
+                          ->select('id', 'user_id', 'card_id', 'title', 'description', 'image', 'link_shopee', 'link_tiktok', 'price', 'range', 'stock', 'status', 'specifications', 'created_at', 'updated_at')
                           ->get();
         
         // Make image visible untuk public view - iterate directly
