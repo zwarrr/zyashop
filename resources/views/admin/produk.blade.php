@@ -112,12 +112,8 @@
                 <tr class="hover:bg-gray-50 transition duration-200">
                   <td class="px-6 py-4">
                     <div class="flex items-center gap-3">
-                      <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-                        @if($product->image_url)
-                          <img src="{{ $product->image_url }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
-                        @else
-                          <svg class="feather text-gray-600" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg>
-                        @endif
+                      <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0" data-product-id="{{ $product->id }}" data-has-image="{{ !empty($product->image_url) ? 'true' : 'false' }}">
+                        <svg class="feather text-gray-600" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg>
                       </div>
                       <div>
                         <p class="font-medium text-black">{{ $product->title }}</p>
@@ -305,6 +301,26 @@
       if (!event.target.closest('[onclick^="toggleDropdown"]') && !event.target.closest('[id^="dropdown-"]')) {
         document.querySelectorAll('[id^="dropdown-"]').forEach(d => d.classList.add('hidden'));
       }
+    });
+
+    // Load product thumbnails lazily - only if they have images
+    document.querySelectorAll('[data-product-id][data-has-image="true"]').forEach(el => {
+      const productId = el.getAttribute('data-product-id');
+      fetch(`/produk/${productId}`, {
+        headers: { 'Accept': 'application/json' }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.product?.image_url) {
+          const img = document.createElement('img');
+          img.src = data.product.image_url;
+          img.alt = data.product.title || 'Product';
+          img.className = 'w-full h-full object-cover';
+          el.innerHTML = '';
+          el.appendChild(img);
+        }
+      })
+      .catch(err => console.warn('Could not load thumbnail for product ' + productId, err));
     });
 
     // Preview image when file selected
