@@ -60,6 +60,42 @@ Route::get('/debug-products', function () {
     return response()->json($result);
 });
 
+// Debug - Check what products exist and their card relationships
+Route::get('/debug-card-products/{cardId}', function ($cardId) {
+    $card = \App\Models\Card::find($cardId);
+    if (!$card) {
+        return response()->json(['error' => 'Card not found'], 404);
+    }
+    
+    $products = \App\Models\Product::where('card_id', $cardId)
+                                   ->where('status', '!=', 'inactive')
+                                   ->get();
+    
+    $result = [
+        'card' => [
+            'id' => $card->id,
+            'title' => $card->title,
+            'image_exists' => !empty($card->image),
+            'image_length' => strlen($card->image ?? '')
+        ],
+        'products_count' => $products->count(),
+        'products' => []
+    ];
+    
+    foreach ($products as $p) {
+        $result['products'][] = [
+            'id' => $p->id,
+            'title' => $p->title,
+            'status' => $p->status,
+            'image_in_db' => !empty($p->attributes['image']),
+            'image_length' => strlen($p->attributes['image'] ?? ''),
+            'image_preview' => substr($p->attributes['image'] ?? '', 0, 150)
+        ];
+    }
+    
+    return response()->json($result);
+});
+
 // Admin Routes - OPSI A: Auto-login di production, normal auth di local
 Route::middleware('skip.auth.production')->group(function () {
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
