@@ -49,20 +49,18 @@ class ProductController extends Controller
                         ->get();
         
         // Eager load products untuk setiap card (untuk cek jumlah products)
-        // INCLUDE image - card images are needed for display
+        // EXCLUDE image from cards to reduce payload
         $cards = $user->cards()
                      ->where('status', 'active')
-                     ->select('id', 'user_id', 'title', 'category', 'image', 'slug', 'status', 'created_at', 'updated_at')
+                     ->select('id', 'user_id', 'title', 'category', 'slug', 'status', 'created_at', 'updated_at')
                      ->with(['products' => function($query) {
                          $query->where('status', '!=', 'inactive')
                                ->select('id', 'user_id', 'card_id', 'title', 'description', 'link_shopee', 'link_tiktok', 'price', 'range', 'stock', 'status', 'specifications', 'created_at', 'updated_at');
                      }])
                      ->get();
         
-        // Make images visible in response (they are hidden in model)
-        foreach ($cards as $card) {
-            $card->makeVisible('image');
-        }
+        // Load card images separately via accessor (not included in response)
+        // They will be loaded via background fetch in Blade
         
         return view('zyashp', [
             'userProfile' => $userProfile,

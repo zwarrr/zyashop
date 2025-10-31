@@ -21,8 +21,7 @@ class Card extends Model
     // Hide image from serialization by default - too large with base64
     protected $hidden = ['image'];
 
-    // DON'T auto-append image_url to every serialization - only compute when explicitly accessed
-    // This prevents payload explosion when cards are serialized to JSON
+    // DON'T auto-append - prevents payload explosion
     // protected $appends = ['image_url'];
 
     /**
