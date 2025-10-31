@@ -69,24 +69,13 @@
       <div class="card-item rounded-lg overflow-hidden border border-gray-200 hover:border-black transition-colors" data-card="{{ $card->id }}">
         <div class="relative bg-gray-300 overflow-hidden" style="aspect-ratio: 1;">
           @php
-            // Get image from card object (now included in query)
-            $cardImage = $card->image ?? null;
-            $cardImageSrc = 'https://placehold.co/1080x1080?text=' . urlencode($card->title);
-            
-            if (!empty($cardImage)) {
-              if (strpos($cardImage, 'data:') === 0) {
-                // Base64 image
-                $cardImageSrc = $cardImage;
-              } else {
-                // File path
-                $cardImageSrc = asset('storage/' . $cardImage);
-              }
-            }
+            // Don't include image in initial response - will load via AJAX
           @endphp
           <img 
-            src="{{ $cardImageSrc }}" 
+            src="https://placehold.co/1080x1080?text={{ urlencode($card->title) }}" 
             alt="{{ $card->title }}" 
-            class="w-full h-full object-cover"
+            class="w-full h-full object-cover card-image"
+            data-card-id="{{ $card->id }}"
             onerror="this.onerror=null; this.src='https://placehold.co/1080x1080?text={{ urlencode($card->title) }}';"
           >
           <div class="absolute top-2 right-2 bg-black text-white px-2 sm:px-3 py-1 rounded-full text-xs font-semibold">
@@ -149,6 +138,30 @@
         card.style.display = title.includes(searchText) ? '' : 'none';
       });
     });
+
+    // Lazy load card images via AJAX
+    function loadCardImages() {
+      const cardImages = document.querySelectorAll('.card-image[data-card-id]');
+      
+      cardImages.forEach(img => {
+        const cardId = img.dataset.cardId;
+        fetch(`/api/card/${cardId}/image`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.image) {
+              img.src = data.image;
+              img.classList.add('loaded');
+            }
+          })
+          .catch(error => {
+            console.error('Error loading card image:', error);
+            // Keep placeholder on error
+          });
+      });
+    }
+
+    // Load images on page load
+    document.addEventListener('DOMContentLoaded', loadCardImages);
 
     function shareThisPage() {
       const pageTitle = document.title;

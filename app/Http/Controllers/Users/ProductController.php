@@ -49,10 +49,11 @@ class ProductController extends Controller
                         ->get();
         
         // Eager load products untuk setiap card (untuk cek jumlah products)
-        // INCLUDE card image now - user wants card images to work
+        // EXCLUDE image from cards to avoid payload explosion
+        // Will load image via separate endpoint or lazy load in Blade
         $cards = $user->cards()
                      ->where('status', 'active')
-                     ->select('id', 'user_id', 'title', 'category', 'image', 'slug', 'status', 'created_at', 'updated_at')
+                     ->select('id', 'user_id', 'title', 'category', 'slug', 'status', 'created_at', 'updated_at')
                      ->with(['products' => function($query) {
                          $query->where('status', '!=', 'inactive')
                                ->select('id', 'user_id', 'card_id', 'title', 'description', 'link_shopee', 'link_tiktok', 'price', 'range', 'stock', 'status', 'specifications', 'created_at', 'updated_at');
@@ -217,6 +218,26 @@ class ProductController extends Controller
             'isCards' => false,
             'productType' => $type,  // shopee atau tiktok
             'pageTitle' => $type === 'shopee' ? 'Shopee Products' : 'Tiktok Shop Products'
+        ]);
+    }
+
+    /**
+     * Get card image via AJAX - separate endpoint to avoid payload bloat
+     */
+    public function getCardImage($cardId)
+    {
+        $card = Card::find($cardId);
+        
+        if (!$card || !$card->image) {
+            return response()->json([
+                'image' => null,
+                'error' => 'Card not found or has no image'
+            ], 404);
+        }
+
+        return response()->json([
+            'id' => $card->id,
+            'image' => $card->image
         ]);
     }
 }
