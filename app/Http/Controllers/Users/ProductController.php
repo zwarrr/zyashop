@@ -148,36 +148,38 @@ class ProductController extends Controller
         $card = Card::findOrFail($cardId);
         
         // Ambil products yang memiliki card_id ini
-        $query = Product::where('card_id', $cardId)
-                       ->where('status', '!=', 'inactive');
+        $products = Product::where('card_id', $cardId)
+                          ->where('status', '!=', 'inactive')
+                          ->get();
         
-        // Add image to select explicitly to make sure it's loaded
-        $query->addSelect('*');
+        \Log::info('showProductsByCard - products fetched', [
+            'count' => $products->count(),
+            'first_product_raw_image_exists' => $products->count() > 0 && isset($products[0]->attributes['image']),
+            'first_product_raw_image_length' => $products->count() > 0 ? strlen($products[0]->attributes['image'] ?? '') : 0
+        ]);
         
-        $products = $query->get();
-        
-        // Make image visible - iterate directly to modify the collection IN PLACE
+        // Make images accessible - convert to array then back to collection with visible images
+        $productsArray = [];
         foreach ($products as $product) {
+            // Make image visible explicitly
             $product->makeVisible('image');
+            // Add to array
+            $productsArray[] = $product;
         }
         
-        // DEBUG: Log pertama product untuk check
-        if ($products->count() > 0) {
-            $first = $products->first();
-            \Log::info('showProductsByCard Image Debug', [
-                'card_id' => $cardId,
-                'product_id' => $first->id,
-                'has_image' => !empty($first->image),
-                'image_length' => strlen($first->image ?? ''),
-                'image_starts_with_data' => strpos($first->image ?? '', 'data:') === 0 ? 'YES' : 'NO',
-                'image_preview' => substr($first->image ?? '', 0, 100)
-            ]);
-        }
+        // Convert back to collection
+        $products = collect($productsArray);
         
         // Jika tidak ada products, kirim flag hasNoProducts
         $hasNoProducts = $products->isEmpty();
         
         $userProfile = $user->profile;
+        
+        \Log::info('showProductsByCard - after makeVisible', [
+            'count' => $products->count(),
+            'first_product_image_accessible' => $products->count() > 0 && !empty($products[0]->image),
+            'first_product_image_length' => $products->count() > 0 ? strlen($products[0]->image ?? '') : 0
+        ]);
         
         // Render sections/product.blade dengan data products dari card
         return view('sections.product', [

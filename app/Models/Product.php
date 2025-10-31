@@ -28,6 +28,15 @@ class Product extends Model
     protected $hidden = ['image'];
 
     /**
+     * Get the raw image from attributes directly
+     * This bypasses the hidden field restriction for property access
+     */
+    public function getRawImageAttribute()
+    {
+        return $this->attributes['image'] ?? null;
+    }
+
+    /**
      * Relationship: Product belongs to User
      */
     public function user()
