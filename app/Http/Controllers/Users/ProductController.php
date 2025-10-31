@@ -102,18 +102,10 @@ class ProductController extends Controller
         $products = $user->cards()
                         ->where('category', $category)
                         ->where('status', 'active')
-                        ->get()
-                        ->map(function($card) {
-                            // Add image_url for frontend display
-                            if ($card->image && strpos($card->image, 'data:') === 0) {
-                                $card->image_url = route('card.image', ['id' => $card->id]);
-                            } else if ($card->image) {
-                                $card->image_url = asset('storage/' . $card->image);
-                            } else {
-                                $card->image_url = null;
-                            }
-                            return $card;
-                        });
+                        ->get();
+        
+        // Make image visible for public view
+        $products = $products->map(fn($p) => $p->makeVisible('image'));
         
         // Convert to paginator for compatibility
         $perPage = 12;
