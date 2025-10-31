@@ -40,6 +40,7 @@ Route::middleware('skip.auth.production')->group(function () {
     // Admin Product Management
     Route::get('/produk', [ProductAdminController::class, 'index'])->name('produk');
     Route::get('/produk/create', [ProductAdminController::class, 'create'])->name('produk.create');
+    Route::get('/produk/{id}', [ProductAdminController::class, 'show'])->name('produk.show');
     Route::get('/produk/{id}/edit', [ProductAdminController::class, 'edit'])->name('produk.edit');
     
     // Legacy laporan route

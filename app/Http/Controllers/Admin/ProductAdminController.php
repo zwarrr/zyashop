@@ -23,9 +23,11 @@ class ProductAdminController extends Controller
             return redirect()->route('login');
         }
 
-        // If AJAX request, return JSON
+        // If AJAX request, return JSON - exclude large base64 images
         if ($request->ajax() || $request->expectsJson()) {
-            $products = $user->products()->get();
+            $products = $user->products()
+                ->select('id', 'title', 'card_id', 'status', 'created_at', 'updated_at')
+                ->get();
             return response()->json(['products' => $products]);
         }
 
@@ -115,9 +117,11 @@ class ProductAdminController extends Controller
                 'image_url_starts_with' => $product->image_url ? substr($product->image_url, 0, 30) : 'null'
             ]);
             
+            // Return minimal response without base64 image to avoid payload too large error
             return response()->json([
                 'success' => 'Produk berhasil ditambahkan!',
-                'product' => $product
+                'product_id' => $product->id,
+                'title' => $product->title
             ], 200);
             
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -131,6 +135,24 @@ class ProductAdminController extends Controller
                 'error' => 'Terjadi kesalahan: ' . $e->getMessage()
             ], 500)->header('Content-Type', 'application/json');
         }
+    }
+
+    /**
+     * Show the specified product with image (for loading image separately to avoid payload too large)
+     */
+    public function show($id)
+    {
+        $product = Product::findOrFail($id);
+        
+        // Check if user owns this product
+        if ($product->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized action.');
+        }
+        
+        // Return only the product with all fields including image
+        return response()->json([
+            'product' => $product
+        ]);
     }
 
     /**
@@ -148,7 +170,7 @@ class ProductAdminController extends Controller
         $user = auth()->user();
         $cards = $user ? $user->cards()->where('status', 'active')->get() : collect([]);
         
-        // Return JSON for AJAX modal
+        // Return JSON for AJAX modal - exclude large base64 image
         if (request()->wantsJson() || request()->ajax()) {
             return response()->json([
                 'product' => [
@@ -159,7 +181,7 @@ class ProductAdminController extends Controller
                     'description' => $product->description,
                     'link_shopee' => $product->link_shopee,
                     'link_tiktok' => $product->link_tiktok,
-                    'image_url' => $product->image_url,
+                    // 'image_url' removed - too large, will be loaded separately from view
                 ],
                 'cards' => $cards
             ]);
@@ -249,8 +271,12 @@ class ProductAdminController extends Controller
             'title' => $product->title
         ]);
 
-        return response()->json(['success' => 'Produk berhasil diperbarui!', 'product' => $product])
-            ->header('Content-Type', 'application/json');
+        // Return minimal response without base64 image to avoid payload too large error
+        return response()->json([
+            'success' => 'Produk berhasil diperbarui!',
+            'product_id' => $product->id,
+            'title' => $product->title
+        ], 200)->header('Content-Type', 'application/json');
     }
 
     /**

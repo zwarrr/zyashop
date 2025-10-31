@@ -386,12 +386,21 @@
             document.getElementById('productLinkShopee').value = data.product.link_shopee || '';
             document.getElementById('productLinkTiktok').value = data.product.link_tiktok || '';
             
-            // Show existing image if available
-            if (data.product.image_url) {
-              document.getElementById('imagePreview').src = data.product.image_url;
-              document.getElementById('imagePreviewContainer').classList.remove('hidden');
-              document.getElementById('imageInputContainer').classList.add('hidden');
-            }
+            // Load image separately from /produk/{id} route to avoid payload too large
+            // The view will display it via the paginated products list
+            const productId = data.product.id;
+            fetch(`/produk/${productId}`, {
+              headers: { 'Accept': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(productData => {
+              if (productData.product?.image_url) {
+                document.getElementById('imagePreview').src = productData.product.image_url;
+                document.getElementById('imagePreviewContainer').classList.remove('hidden');
+                document.getElementById('imageInputContainer').classList.add('hidden');
+              }
+            })
+            .catch(err => console.warn('Could not load image:', err));
           })
           .catch(error => {
             console.error('Error loading product:', error);
