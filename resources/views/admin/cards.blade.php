@@ -282,11 +282,26 @@
           console.log('Loading thumbnail for card:', cardId);
           
           fetch(`/cards/${cardId}`, {
-            headers: { 'Accept': 'application/json' }
+            headers: { 
+              'Accept': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            }
           })
           .then(res => {
-            if (!res.ok) throw new Error('Response status: ' + res.status);
-            return res.json();
+            console.log('Fetch response status for card ' + cardId + ':', res.status, res.statusText);
+            if (!res.ok) {
+              throw new Error('Response status: ' + res.status + ' ' + res.statusText);
+            }
+            return res.text(); // Get as text first
+          })
+          .then(text => {
+            console.log('Response text for card ' + cardId + ' (first 200 chars):', text.substring(0, 200));
+            try {
+              return JSON.parse(text);
+            } catch (e) {
+              console.error('Failed to parse JSON for card ' + cardId, e);
+              throw e;
+            }
           })
           .then(data => {
             console.log('Card data for', cardId, ':', data);
