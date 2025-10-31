@@ -161,7 +161,21 @@
 
     <!-- Profile Section -->
     <section class="text-center mb-6">
-      <img src="{{ $userProfile?->profile_image ?? 'https://i.pinimg.com/736x/78/0d/08/780d084f353d666f61a0067dbf48bfdd.jpg' }}" alt="Profile" class="w-28 h-28 mx-auto rounded-full bg-gray-300 mb-4" />
+      @php
+        $profileImage = $userProfile?->profile_image;
+        $imageSrc = 'https://i.pinimg.com/736x/78/0d/08/780d084f353d666f61a0067dbf48bfdd.jpg';
+        
+        if (!empty($profileImage)) {
+          // Check if it's base64 data
+          if (strpos($profileImage, 'data:') === 0) {
+            $imageSrc = $profileImage;
+          } else if (strpos($profileImage, '/storage/') === 0) {
+            // Old file path format
+            $imageSrc = asset($profileImage);
+          }
+        }
+      @endphp
+      <img src="{{ $imageSrc }}" alt="Profile" class="w-28 h-28 mx-auto rounded-full bg-gray-300 mb-4" />
 
       <h1 class="text-[20px] font-bold leading-tight">{{ $userProfile?->display_name ?? 'User' }}</h1>
       <p class="text-gray-700 text-sm">

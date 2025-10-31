@@ -54,37 +54,32 @@ class ProfileAdminController extends Controller
         $profile->bio = $validated['bio'];
         $profile->verified_badge = $validated['verified_badge'];
 
-        // Handle image upload with custom filename
+        // Handle image upload - store as base64 for Vercel compatibility (like products and cards)
         if ($request->hasFile('profile_image')) {
-            // Ensure profiles directory exists - use /tmp in production
-            $basePath = app()->environment('production') ? '/tmp/storage' : storage_path('app/public');
-            $profilesDir = $basePath . '/profiles';
-            if (!file_exists($profilesDir)) {
-                if (!mkdir($profilesDir, 0755, true)) {
-                    return response()->json(['error' => 'Tidak dapat membuat direktori untuk menyimpan gambar'], 500);
-                }
-            }
-            
-            // Delete old image if exists
-            if ($profile->profile_image && Storage::disk('public')->exists(str_replace('/storage/', '', $profile->profile_image))) {
-                Storage::disk('public')->delete(str_replace('/storage/', '', $profile->profile_image));
-            }
-
             $image = $request->file('profile_image');
-            $username = Str::slug($validated['username']);
-            $extension = $image->getClientOriginalExtension();
-            $filename = 'profile-' . $username . '.' . $extension;
             
-            // Check if file exists, add counter if needed
-            $counter = 1;
-            $oldFilename = $profile->profile_image ? basename(str_replace('/storage/', '', $profile->profile_image)) : '';
-            while (Storage::disk('public')->exists('profiles/' . $filename) && $filename !== $oldFilename) {
-                $filename = 'profile-' . $username . '-' . $counter . '.' . $extension;
-                $counter++;
+            \Log::info('Update - Profile image upload detected', [
+                'original_name' => $image->getClientOriginalName(),
+                'size' => $image->getSize(),
+                'mime' => $image->getMimeType()
+            ]);
+            
+            // Check if image is valid
+            if (!$image->isValid()) {
+                return response()->json(['error' => 'File gambar tidak valid'], 422);
             }
             
-            $path = $image->storeAs('profiles', $filename, 'public');
-            $profile->profile_image = '/storage/' . $path;
+            // Store image in base64 format in database for Vercel compatibility
+            $imageContent = file_get_contents($image->getRealPath());
+            $base64Image = base64_encode($imageContent);
+            $mimeType = $image->getMimeType();
+            
+            $profile->profile_image = 'data:' . $mimeType . ';base64,' . $base64Image;
+            
+            \Log::info('Update - Profile image stored as base64', [
+                'image_size_bytes' => strlen($profile->profile_image),
+                'mime_type' => $mimeType
+            ]);
         }
 
         $profile->save();

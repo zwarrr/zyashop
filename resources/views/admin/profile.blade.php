@@ -57,7 +57,21 @@
       <div class="flex items-start gap-6">
         <!-- Profile Image -->
         <div class="flex-shrink-0">
-          <img src="{{ $profile?->profile_image ?? 'https://i.pinimg.com/736x/78/0d/08/780d084f353d666f61a0067dbf48bfdd.jpg' }}" 
+          @php
+            $profileImage = $profile?->profile_image;
+            $imageSrc = 'https://i.pinimg.com/736x/78/0d/08/780d084f353d666f61a0067dbf48bfdd.jpg';
+            
+            if (!empty($profileImage)) {
+              // Check if it's base64 data
+              if (strpos($profileImage, 'data:') === 0) {
+                $imageSrc = $profileImage;
+              } else if (strpos($profileImage, '/storage/') === 0) {
+                // Old file path format
+                $imageSrc = asset($profileImage);
+              }
+            }
+          @endphp
+          <img src="{{ $imageSrc }}" 
                alt="Profile" 
                class="w-28 h-28 rounded-full object-cover border-4 border-gray-100">
         </div>
