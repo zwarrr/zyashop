@@ -223,8 +223,8 @@
          data-has-products="{{ $card->products()->where('status', '!=', 'inactive')->count() > 0 ? 'true' : 'false' }}"
          title="{{ $card->title }}">
         @php
-          // Get image from raw attributes since field is hidden in model
-          $cardImage = $card->attributes['image'] ?? null;
+          // Get image from card object (now included in query)
+          $cardImage = $card->image ?? null;
           $cardImageSrc = 'https://placehold.co/1080x1080?text=' . urlencode($card->title);
           
           if (!empty($cardImage)) {

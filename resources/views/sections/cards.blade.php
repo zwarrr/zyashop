@@ -69,8 +69,8 @@
       <div class="card-item rounded-lg overflow-hidden border border-gray-200 hover:border-black transition-colors" data-card="{{ $card->id }}">
         <div class="relative bg-gray-300 overflow-hidden" style="aspect-ratio: 1;">
           @php
-            // Get image from raw attributes since field is hidden in model
-            $cardImage = $card->attributes['image'] ?? null;
+            // Get image from card object (now included in query)
+            $cardImage = $card->image ?? null;
             $cardImageSrc = 'https://placehold.co/1080x1080?text=' . urlencode($card->title);
             
             if (!empty($cardImage)) {
