@@ -59,10 +59,10 @@
             @endphp
             @if($hasImage && $isBase64)
               <!-- Image is base64 data -->
-              <img src="{{ $product->image }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
+              <img src="{{ $product->image }}" alt="{{ $product->title }}" class="w-full h-full object-cover" onerror="console.log('Image failed to load for card', {{ $product->id }})">
             @elseif($hasImage)
               <!-- Image is file path -->
-              <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
+              <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->title }}" class="w-full h-full object-cover" onerror="console.log('Image failed to load for card', {{ $product->id }})">
             @else
               <img src="https://placehold.co/1080x1080?text={{ urlencode($product->title) }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
             @endif
@@ -103,10 +103,10 @@
           <div class="relative bg-gray-300 overflow-hidden" style="aspect-ratio: 1;">
             @if($hasImage && $isBase64)
               <!-- Image is base64 data -->
-              <img src="{{ $product->image }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
+              <img src="{{ $product->image }}" alt="{{ $product->title }}" class="w-full h-full object-cover" onerror="console.log('Image failed to load for product', {{ $product->id }})">
             @elseif($hasImage)
               <!-- Image is file path -->
-              <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
+              <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->title }}" class="w-full h-full object-cover" onerror="console.log('Image failed to load for product', {{ $product->id }})">
             @else
               <img src="https://placehold.co/400x400?text={{ urlencode($product->title) }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
             @endif

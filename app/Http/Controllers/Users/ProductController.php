@@ -147,12 +147,16 @@ class ProductController extends Controller
         // Cari card by ID
         $card = Card::findOrFail($cardId);
         
-        // Ambil products yang memiliki card_id ini - PASTIKAN IMAGE VISIBLE
-        $products = Product::where('card_id', $cardId)
-                          ->where('status', '!=', 'inactive')
-                          ->get();
+        // Ambil products yang memiliki card_id ini
+        $query = Product::where('card_id', $cardId)
+                       ->where('status', '!=', 'inactive');
         
-        // Make image visible - iterate directly to modify the collection
+        // Add image to select explicitly to make sure it's loaded
+        $query->addSelect('*');
+        
+        $products = $query->get();
+        
+        // Make image visible - iterate directly to modify the collection IN PLACE
         foreach ($products as $product) {
             $product->makeVisible('image');
         }
@@ -160,11 +164,12 @@ class ProductController extends Controller
         // DEBUG: Log pertama product untuk check
         if ($products->count() > 0) {
             $first = $products->first();
-            \Log::info('Product Image Debug', [
+            \Log::info('showProductsByCard Image Debug', [
+                'card_id' => $cardId,
                 'product_id' => $first->id,
                 'has_image' => !empty($first->image),
                 'image_length' => strlen($first->image ?? ''),
-                'image_starts_with_data' => strpos($first->image ?? '', 'data:') === 0,
+                'image_starts_with_data' => strpos($first->image ?? '', 'data:') === 0 ? 'YES' : 'NO',
                 'image_preview' => substr($first->image ?? '', 0, 100)
             ]);
         }
