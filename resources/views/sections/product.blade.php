@@ -53,10 +53,14 @@
         <!-- Card Item (from cards table) -->
         <a href="javascript:void(0)" class="product-card rounded-lg overflow-hidden border border-gray-200 hover:border-black transition-colors" data-product="{{ $product->id }}">
           <div class="relative bg-gray-300 overflow-hidden" style="aspect-ratio: 1;">
-            @if($product->image && strpos($product->image, 'data:') === 0)
+            @php
+              $hasImage = !empty($product->image);
+              $isBase64 = $hasImage && strpos($product->image, 'data:') === 0;
+            @endphp
+            @if($hasImage && $isBase64)
               <!-- Image is base64 data -->
               <img src="{{ $product->image }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
-            @elseif($product->image)
+            @elseif($hasImage)
               <!-- Image is file path -->
               <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
             @else
@@ -86,6 +90,10 @@
             // Default: gunakan link yang tersedia (prioritas shopee)
             $productLink = $product->link_shopee ?? $product->link_tiktok ?? '#';
           }
+          
+          // Check image
+          $hasImage = !empty($product->image);
+          $isBase64 = $hasImage && strpos($product->image, 'data:') === 0;
         @endphp
         <a href="{{ $productLink }}" 
            target="_blank"
@@ -93,8 +101,12 @@
            class="product-card rounded-lg overflow-hidden border border-gray-200 hover:border-black transition-colors" 
            data-product="{{ $product->id }}">
           <div class="relative bg-gray-300 overflow-hidden" style="aspect-ratio: 1;">
-            @if($product->image)
+            @if($hasImage && $isBase64)
+              <!-- Image is base64 data -->
               <img src="{{ $product->image }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
+            @elseif($hasImage)
+              <!-- Image is file path -->
+              <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
             @else
               <img src="https://placehold.co/400x400?text={{ urlencode($product->title) }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
             @endif

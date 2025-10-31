@@ -145,13 +145,23 @@ class ProductController extends Controller
         // Cari card by ID
         $card = Card::findOrFail($cardId);
         
-        // Ambil products yang memiliki card_id ini
+        // Ambil products yang memiliki card_id ini - PASTIKAN IMAGE VISIBLE
         $products = Product::where('card_id', $cardId)
                           ->where('status', '!=', 'inactive')
-                          ->get();
+                          ->get()
+                          ->map(fn($p) => $p->makeVisible('image'));
         
-        // Make image visible untuk public view
-        $products = $products->map(fn($p) => $p->makeVisible('image'));
+        // DEBUG: Log pertama product untuk check
+        if ($products->count() > 0) {
+            $first = $products->first();
+            \Log::info('Product Image Debug', [
+                'product_id' => $first->id,
+                'has_image' => !empty($first->image),
+                'image_length' => strlen($first->image ?? ''),
+                'image_starts_with_data' => strpos($first->image ?? '', 'data:') === 0,
+                'image_preview' => substr($first->image ?? '', 0, 100)
+            ]);
+        }
         
         // Jika tidak ada products, kirim flag hasNoProducts
         $hasNoProducts = $products->isEmpty();
