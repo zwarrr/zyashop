@@ -94,20 +94,72 @@ class CardAdminController extends Controller
 
             $card = Card::create($validated);
             
-            // Add image URL to response using accessor
-            $cardData = $card->toArray();
-            $cardData['image_url'] = $card->image_url;
-
+            \Log::info('Card created successfully', [
+                'card_id' => $card->id,
+                'has_image' => !empty($card->image),
+                'image_length' => $card->image ? strlen($card->image) : 0,
+                'image_starts_with' => $card->image ? substr($card->image, 0, 30) : 'null'
+            ]);
+            
+            // Return minimal response without base64 image to avoid payload too large error
             return response()->json([
                 'success' => 'Card berhasil ditambahkan', 
-                'card' => $cardData
-            ], 201)->header('Content-Type', 'application/json');
+                'card_id' => $card->id,
+                'title' => $card->title
+            ], 200)->header('Content-Type', 'application/json');
             
         } catch (\Exception $e) {
             \Log::error('Card store error: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Terjadi kesalahan: ' . $e->getMessage()
             ], 500)->header('Content-Type', 'application/json');
+        }
+    }
+
+    /**
+     * Show the specified card with image (for loading image separately to avoid payload too large)
+     */
+    public function show($id)
+    {
+        try {
+            $card = Card::findOrFail($id);
+            
+            $authId = auth()->id();
+            \Log::info('Card show() called', [
+                'card_id' => $id,
+                'card_user_id' => $card->user_id,
+                'auth_id' => $authId,
+                'is_authenticated' => auth()->check(),
+                'image_length' => $card->image ? strlen($card->image) : 0
+            ]);
+            
+            // Check if user owns this card
+            if ($authId && $card->user_id !== $authId) {
+                \Log::warning('Unauthorized access attempt to card', [
+                    'card_id' => $id,
+                    'card_user_id' => $card->user_id,
+                    'auth_id' => $authId
+                ]);
+                return response()->json(['error' => 'Unauthorized'], 403);
+            }
+            
+            // Make image visible for this response (normally hidden to avoid large payloads)
+            $card->makeVisible('image');
+            
+            // Return only the card with all fields including image
+            return response()->json([
+                'card' => $card
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            \Log::warning('Card not found', ['card_id' => $id]);
+            return response()->json(['error' => 'Card not found'], 404);
+        } catch (\Exception $e) {
+            \Log::error('Error in show()', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
@@ -190,12 +242,18 @@ class CardAdminController extends Controller
 
         $card->update($validated);
         
-        // Add image URL to response using accessor
-        $cardData = $card->fresh()->toArray();
-        $cardData['image_url'] = $card->image_url;
-
-        return response()->json(['success' => 'Card berhasil diperbarui', 'card' => $cardData])
-            ->header('Content-Type', 'application/json');
+        \Log::info('Card updated successfully', [
+            'card_id' => $card->id,
+            'has_image' => !empty($card->image),
+            'image_length' => $card->image ? strlen($card->image) : 0
+        ]);
+        
+        // Return minimal response without base64 image to avoid payload too large error
+        return response()->json([
+            'success' => 'Card berhasil diperbarui',
+            'card_id' => $card->id,
+            'title' => $card->title
+        ])->header('Content-Type', 'application/json');
     }
 
     /**

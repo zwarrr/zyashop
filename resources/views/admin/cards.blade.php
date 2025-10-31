@@ -221,6 +221,8 @@
       })
       .then(res => res.json())
       .then(data => {
+        console.log('Loaded cards:', data.cards);
+        
         if (!data.cards || data.cards.length === 0) {
           tableBody.innerHTML = `
             <tr>
@@ -236,7 +238,7 @@
           <tr class="hover:bg-gray-50 transition duration-200">
             <td class="px-6 py-4">
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+                <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0" data-card-id="${card.id}" data-has-image="true">
                   <svg class="feather text-gray-600" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg>
                 </div>
                 <div>
@@ -273,6 +275,36 @@
             </td>
           </tr>
         `).join('');
+
+        // Load card thumbnails lazily
+        document.querySelectorAll('[data-card-id][data-has-image="true"]').forEach(el => {
+          const cardId = el.getAttribute('data-card-id');
+          console.log('Loading thumbnail for card:', cardId);
+          
+          fetch(`/cards/${cardId}`, {
+            headers: { 'Accept': 'application/json' }
+          })
+          .then(res => {
+            if (!res.ok) throw new Error('Response status: ' + res.status);
+            return res.json();
+          })
+          .then(data => {
+            console.log('Card data for', cardId, ':', data);
+            
+            if (data.card?.image) {
+              console.log('Image found for card', cardId, '- loading image');
+              const img = document.createElement('img');
+              img.src = data.card.image;
+              img.alt = data.card.title || 'Card';
+              img.className = 'w-full h-full object-cover';
+              el.innerHTML = '';
+              el.appendChild(img);
+            } else {
+              console.warn('No image found for card', cardId);
+            }
+          })
+          .catch(err => console.error('Error loading thumbnail for card ' + cardId + ':', err));
+        });
       })
       .catch(err => {
         console.error('Error loading cards:', err);
@@ -515,11 +547,23 @@
           document.getElementById('cardCategory').value = data.card.category || '';
           document.getElementById('cardStatus').value = data.card.status || 'active';
           
-          // Show existing image if available
-          if (data.card.image_url) {
-            document.getElementById('imagePreview').src = data.card.image_url;
-            document.getElementById('imagePreviewContainer').classList.remove('hidden');
-          }
+          // Load image from show() endpoint to get full base64 data
+          return fetch(`/cards/${cardId}`, {
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'Accept': 'application/json'
+            }
+          })
+          .then(res => {
+            if (!res.ok) throw new Error('Failed to load image');
+            return res.json();
+          })
+          .then(imageData => {
+            if (imageData.card?.image) {
+              document.getElementById('imagePreview').src = imageData.card.image;
+              document.getElementById('imagePreviewContainer').classList.remove('hidden');
+            }
+          });
         })
         .catch(error => {
           console.error('Error loading card:', error);
