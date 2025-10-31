@@ -72,6 +72,12 @@ class ProductAdminController extends Controller
     public function store(Request $request)
     {
         try {
+            \Log::info('Product store() called', [
+                'has_image_file' => $request->hasFile('image'),
+                'image_file_size' => $request->hasFile('image') ? $request->file('image')->getSize() : 0,
+                'request_data_keys' => array_keys($request->all())
+            ]);
+            
             $validated = $request->validate([
             'title' => 'required|string|max:255',
             'card_id' => 'required|exists:cards,id',

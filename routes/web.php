@@ -96,6 +96,31 @@ Route::get('/debug-card-products/{cardId}', function ($cardId) {
     return response()->json($result);
 });
 
+// Debug - List ALL products with their image status
+Route::get('/debug-all-products', function () {
+    $products = \App\Models\Product::select('id', 'title', 'card_id', 'status', 'image')
+                                  ->limit(20)
+                                  ->get();
+    
+    $result = [];
+    foreach ($products as $p) {
+        $result[] = [
+            'id' => $p->id,
+            'title' => $p->title,
+            'card_id' => $p->card_id,
+            'status' => $p->status,
+            'has_image' => !empty($p->image),
+            'image_length' => strlen($p->image ?? ''),
+            'image_type' => $p->image ? (strpos($p->image, 'data:') === 0 ? 'base64' : 'path') : 'null'
+        ];
+    }
+    
+    return response()->json([
+        'total' => $products->count(),
+        'products' => $result
+    ]);
+});
+
 // Admin Routes - OPSI A: Auto-login di production, normal auth di local
 Route::middleware('skip.auth.production')->group(function () {
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
