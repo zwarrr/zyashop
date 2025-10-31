@@ -142,17 +142,42 @@ class ProductAdminController extends Controller
      */
     public function show($id)
     {
-        $product = Product::findOrFail($id);
-        
-        // Check if user owns this product
-        if ($product->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized action.');
+        try {
+            $product = Product::findOrFail($id);
+            
+            $authId = auth()->id();
+            \Log::info('Product show() called', [
+                'product_id' => $id,
+                'product_user_id' => $product->user_id,
+                'auth_id' => $authId,
+                'is_authenticated' => auth()->check()
+            ]);
+            
+            // Check if user owns this product
+            if ($authId && $product->user_id !== $authId) {
+                \Log::warning('Unauthorized access attempt to product', [
+                    'product_id' => $id,
+                    'product_user_id' => $product->user_id,
+                    'auth_id' => $authId
+                ]);
+                return response()->json(['error' => 'Unauthorized'], 403);
+            }
+            
+            // Return only the product with all fields including image
+            return response()->json([
+                'product' => $product
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            \Log::warning('Product not found', ['product_id' => $id]);
+            return response()->json(['error' => 'Product not found'], 404);
+        } catch (\Exception $e) {
+            \Log::error('Error in show()', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            return response()->json(['error' => $e->getMessage()], 500);
         }
-        
-        // Return only the product with all fields including image
-        return response()->json([
-            'product' => $product
-        ]);
     }
 
     /**
