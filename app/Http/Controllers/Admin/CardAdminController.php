@@ -15,13 +15,10 @@ class CardAdminController extends Controller
      */
     public function index(Request $request)
     {
-        // Get cards with image URLs using accessor
-        $cards = auth()->user()->cards()->get()->map(function($card) {
-            $cardData = $card->toArray();
-            // Use the accessor which handles both base64 and file paths
-            $cardData['image_url'] = $card->image_url;
-            return $cardData;
-        });
+        // Get cards WITHOUT images to avoid large payloads
+        $cards = auth()->user()->cards()
+            ->select('id', 'title', 'category', 'slug', 'status', 'user_id', 'created_at', 'updated_at')
+            ->get();
         
         // If AJAX request, return JSON
         if ($request->ajax() || $request->expectsJson()) {

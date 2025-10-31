@@ -24,7 +24,8 @@ class Product extends Model
         'specifications'
     ];
 
-    // NO ACCESSOR - image_url is direct column, not computed
+    // Hide image from serialization by default - too large with base64
+    protected $hidden = ['image'];
 
     /**
      * Relationship: Product belongs to User

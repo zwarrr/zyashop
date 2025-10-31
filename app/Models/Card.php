@@ -17,7 +17,11 @@ class Card extends Model
         'user_id',
     ];
 
-    protected $appends = ['image_url'];
+    // Hide image from serialization by default - too large with base64
+    protected $hidden = ['image'];
+
+    // DON'T auto-append image_url to every serialization - only compute when needed
+    // protected $appends = ['image_url'];
 
     /**
      * Get the full URL for the card image.
