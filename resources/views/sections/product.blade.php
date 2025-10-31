@@ -89,8 +89,8 @@
            class="product-card rounded-lg overflow-hidden border border-gray-200 hover:border-black transition-colors" 
            data-product="{{ $product->id }}">
           <div class="relative bg-gray-300 overflow-hidden" style="aspect-ratio: 1;">
-            @if($product->image_url)
-              <img src="{{ $product->image_url }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
+            @if($product->image)
+              <img src="{{ $product->image }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
             @else
               <img src="https://placehold.co/400x400?text={{ urlencode($product->title) }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
             @endif

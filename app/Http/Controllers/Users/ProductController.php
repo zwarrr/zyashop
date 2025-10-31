@@ -33,6 +33,9 @@ class ProductController extends Controller
         $userLinks = $user->links()->orderBy('order')->get();
         $products = $user->products()->where('status', 'active')->get();
         
+        // Make image visible for public view
+        $products = $products->map(fn($p) => $p->makeVisible('image'));
+        
         // Eager load products untuk setiap card (untuk cek jumlah products)
         $cards = $user->cards()
                      ->where('status', 'active')
@@ -40,6 +43,9 @@ class ProductController extends Controller
                          $query->where('status', '!=', 'inactive');
                      }])
                      ->get();
+        
+        // Make card images visible
+        $cards = $cards->map(fn($c) => $c->makeVisible('image'));
         
         return view('zyashp', [
             'userProfile' => $userProfile,
@@ -63,6 +69,15 @@ class ProductController extends Controller
         $products = $user->products()
                         ->where('status', '!=', 'coming_soon')
                         ->paginate(12);
+        
+        // Make image visible for public view
+        $products = $products->getCollection()->map(fn($p) => $p->makeVisible('image'));
+        $products = new \Illuminate\Pagination\Paginator(
+            $products,
+            request()->get('per_page', 12),
+            request()->get('page', 1),
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
         
         $userProfile = $user->profile;
         
@@ -143,6 +158,9 @@ class ProductController extends Controller
                           ->where('status', '!=', 'inactive')
                           ->get();
         
+        // Make image visible untuk public view
+        $products = $products->map(fn($p) => $p->makeVisible('image'));
+        
         // Jika tidak ada products, kirim flag hasNoProducts
         $hasNoProducts = $products->isEmpty();
         
@@ -183,6 +201,9 @@ class ProductController extends Controller
                           ->whereNotNull($linkField)
                           ->where($linkField, '!=', '')
                           ->get();
+        
+        // Make image visible untuk public view
+        $products = $products->map(fn($p) => $p->makeVisible('image'));
         
         $userProfile = $user->profile;
         
