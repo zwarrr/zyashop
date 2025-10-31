@@ -20,6 +20,10 @@ class CardAdminController extends Controller
             ->select('id', 'title', 'category', 'slug', 'status', 'user_id', 'created_at', 'updated_at')
             ->get();
         
+        \Log::info('CardAdminController index() - rendering view', [
+            'cards_count' => $cards->count()
+        ]);
+        
         // If AJAX request, return JSON
         if ($request->ajax() || $request->expectsJson()) {
             return response()->json(['cards' => $cards]);

@@ -35,10 +35,18 @@ class ProductAdminController extends Controller
         $products = $user->products()->with('card')->paginate(10);
         $cards = $user->cards()->where('status', 'active')->get();
         
-        return view('admin.produk', [
+        \Log::info('ProductAdminController index() - rendering view', [
+            'products_count' => $products->count(),
+            'cards_count' => $cards->count(),
+            'has_images' => $cards->filter(fn($c) => !empty($c->image))->count()
+        ]);
+        
+        $view = view('admin.produk', [
             'products' => $products,
             'cards' => $cards
         ]);
+        
+        return $view;
     }
 
     /**
