@@ -533,6 +533,27 @@
       
       console.log('Form submit started');
       
+      // Client-side validation
+      const title = document.getElementById('productTitle').value.trim();
+      const cardId = document.getElementById('productCard').value.trim();
+      const linkShopee = document.getElementById('productLinkShopee').value.trim();
+      const linkTiktok = document.getElementById('productLinkTiktok').value.trim();
+      
+      if (!title) {
+        showAlertModal('Validasi', 'Judul produk wajib diisi!', 'error');
+        return;
+      }
+      
+      if (!cardId) {
+        showAlertModal('Validasi', 'Card wajib dipilih!', 'error');
+        return;
+      }
+      
+      if (!linkShopee && !linkTiktok) {
+        showAlertModal('Validasi', 'Minimal salah satu link (Shopee atau Tiktok) harus diisi!', 'error');
+        return;
+      }
+      
       const productId = document.getElementById('productId').value;
       let url = '{{ route("produk.store") }}';
       
@@ -595,9 +616,19 @@
           
           if (data.error) {
             errorMsg = data.error;
-          } else if (data.errors) {
-            // Validation errors
-            errorMsg = Object.values(data.errors).flat().join(', ');
+          }
+          
+          // If validation errors, show them
+          if (data.errors) {
+            let errorsList = [];
+            for (const [field, messages] of Object.entries(data.errors)) {
+              if (Array.isArray(messages)) {
+                errorsList.push(field + ': ' + messages.join(', '));
+              } else {
+                errorsList.push(field + ': ' + messages);
+              }
+            }
+            errorMsg = 'Validasi gagal:\n' + errorsList.join('\n');
           } else if (data.message) {
             errorMsg = data.message;
           }
@@ -606,7 +637,8 @@
             status: response.status,
             statusText: response.statusText,
             message: errorMsg,
-            fullData: data
+            fullData: data,
+            errors: data.errors
           });
           
           setTimeout(() => {
