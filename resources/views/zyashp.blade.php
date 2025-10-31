@@ -222,16 +222,22 @@
          data-card-id="{{ $card->id }}" 
          data-has-products="{{ $card->products()->where('status', '!=', 'inactive')->count() > 0 ? 'true' : 'false' }}"
          title="{{ $card->title }}">
-        @if($card->image_url)
-          <img src="{{ $card->image_url }}" 
-               alt="{{ $card->title }}" 
-               class="w-full h-full object-cover"
-               onerror="this.src='https://placehold.co/1080x1080?text={{ urlencode($card->title) }}'">
-        @else
-          <img src="https://placehold.co/1080x1080?text={{ urlencode($card->title) }}" 
-               alt="{{ $card->title }}" 
-               class="w-full h-full object-cover">
-        @endif
+        @php
+          $cardImageSrc = 'https://placehold.co/1080x1080?text=' . urlencode($card->title);
+          if (!empty($card->image)) {
+            if (strpos($card->image, 'data:') === 0) {
+              // Base64 image
+              $cardImageSrc = $card->image;
+            } else {
+              // File path
+              $cardImageSrc = asset('storage/' . $card->image);
+            }
+          }
+        @endphp
+        <img src="{{ $cardImageSrc }}" 
+             alt="{{ $card->title }}" 
+             class="w-full h-full object-cover"
+             onerror="this.src='https://placehold.co/1080x1080?text={{ urlencode($card->title) }}'">
         <div class="absolute bottom-0 w-full bg-black/80 text-white text-xs text-center py-2 group-hover:bg-black/90 transition-all">{{ $card->title }}</div>
       </a>
       @endforeach

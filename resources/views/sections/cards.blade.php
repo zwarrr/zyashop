@@ -68,8 +68,20 @@
       <!-- Card Item -->
       <div class="card-item rounded-lg overflow-hidden border border-gray-200 hover:border-black transition-colors" data-card="{{ $card->id }}">
         <div class="relative bg-gray-300 overflow-hidden" style="aspect-ratio: 1;">
+          @php
+            $cardImageSrc = 'https://placehold.co/1080x1080?text=' . urlencode($card->title);
+            if (!empty($card->image)) {
+              if (strpos($card->image, 'data:') === 0) {
+                // Base64 image
+                $cardImageSrc = $card->image;
+              } else {
+                // File path
+                $cardImageSrc = asset('storage/' . $card->image);
+              }
+            }
+          @endphp
           <img 
-            src="{{ $card->image ? asset('storage/' . $card->image) : 'https://placehold.co/1080x1080?text=' . urlencode($card->title) }}" 
+            src="{{ $cardImageSrc }}" 
             alt="{{ $card->title }}" 
             class="w-full h-full object-cover"
             onerror="this.onerror=null; this.src='https://placehold.co/1080x1080?text={{ urlencode($card->title) }}';"
