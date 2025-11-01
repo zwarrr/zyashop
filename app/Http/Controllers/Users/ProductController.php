@@ -78,7 +78,7 @@ class ProductController extends Controller
                 $cards = $user->cards()
                              ->where('status', 'active')
                              ->with('products')
-                             ->get(['id', 'user_id', 'title', 'category', 'slug', 'status', 'created_at', 'updated_at']);
+                             ->get(['id', 'user_id', 'title', 'category', 'slug', 'image', 'status', 'created_at', 'updated_at']);
                 \Log::info('DEBUG: Final cards loaded = ' . $cards->count());
             } catch (\Throwable $e) {
                 \Log::error('ERROR fetching cards: ' . $e->getMessage());

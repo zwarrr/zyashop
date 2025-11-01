@@ -222,8 +222,7 @@
          data-card-id="{{ $card->id }}" 
          data-has-products="{{ isset($card->products) && count($card->products ?? []) > 0 ? 'true' : 'false' }}"
          title="{{ $card->title }}">
-        <!-- Placeholder while loading image -->
-        <img src="https://placehold.co/1080x1080?text={{ urlencode($card->title) }}" 
+        <img src="{{ $card->image ?? 'https://placehold.co/1080x1080?text=' . urlencode($card->title) }}" 
              alt="{{ $card->title }}" 
              class="w-full h-full object-cover card-img"
              loading="lazy"
