@@ -18,71 +18,64 @@ class ProductController extends Controller
     public function home()
     {
         try {
-            // Default empty data
+            // Get user
+            $user = auth()->check() ? auth()->user() : User::first();
+            
+            if (!$user) {
+                return view('zyashp', [
+                    'userProfile' => null,
+                    'userLinks' => collect(),
+                    'products' => collect(),
+                    'cards' => collect()
+                ]);
+            }
+
+            // Simple fallback data
             $userProfile = null;
             $userLinks = collect();
             $products = collect();
             $cards = collect();
 
-            // Get user - try auth first, fallback to first user
-            $user = auth()->check() ? auth()->user() : null;
-            if (!$user) {
-                $user = User::where('id', '>', 0)->first();
-            }
-            
-            if (!$user) {
-                return view('zyashp', compact('userProfile', 'userLinks', 'products', 'cards'));
-            }
-
-            // Fetch profile with timeout protection
+            // 1. Get profile
             try {
                 $userProfile = $user->profile;
                 if ($userProfile) {
                     $userProfile->makeHidden('profile_image');
                 }
             } catch (\Throwable $e) {
-                // Silently fail - show page without profile
+                //
             }
 
-            // Fetch links
+            // 2. Get links
             try {
                 $userLinks = $user->links()
-                                 ->select('id', 'user_id', 'title', 'url', 'order')
                                  ->orderBy('order')
-                                 ->limit(20)
-                                 ->get();
+                                 ->get(['id', 'user_id', 'title', 'url', 'order']);
             } catch (\Throwable $e) {
-                // Silently fail
+                //
             }
 
-            // Fetch products
+            // 3. Get products  
             try {
                 $products = $user->products()
                                 ->where('status', 'active')
-                                ->select('id', 'user_id', 'card_id', 'title', 'description', 'link_shopee', 'link_tiktok', 'price', 'range', 'stock', 'status', 'specifications', 'created_at', 'updated_at')
-                                ->limit(50)
-                                ->get();
+                                ->get(['id', 'user_id', 'card_id', 'title', 'description', 'link_shopee', 'link_tiktok', 'price', 'range', 'stock', 'status', 'specifications', 'created_at', 'updated_at']);
             } catch (\Throwable $e) {
-                // Silently fail
+                //
             }
 
-            // Fetch cards with minimal products data
+            // 4. Get cards with products
             try {
                 $cards = $user->cards()
                              ->where('status', 'active')
-                             ->select('id', 'user_id', 'title', 'category', 'slug', 'status', 'created_at', 'updated_at')
-                             ->with(['products' => function($q) {
-                                 $q->select('id', 'card_id', 'status');
-                             }])
-                             ->limit(20)
-                             ->get();
+                             ->with('products')
+                             ->get(['id', 'user_id', 'title', 'category', 'slug', 'status', 'created_at', 'updated_at']);
             } catch (\Throwable $e) {
-                // Silently fail
+                //
             }
             
             return view('zyashp', compact('userProfile', 'userLinks', 'products', 'cards'));
         } catch (\Throwable $e) {
-            // Final fallback - return empty page
             return view('zyashp', [
                 'userProfile' => null,
                 'userLinks' => collect(),
