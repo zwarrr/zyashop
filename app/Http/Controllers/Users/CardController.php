@@ -38,18 +38,19 @@ class CardController extends Controller
                 return response()->json([
                     'success' => false,
                     'placeholder' => "https://placehold.co/1080x1080?text=" . urlencode($card->title)
-                ]);
+                ])->header('Content-Type', 'application/json');
             }
             
             return response()->json([
                 'success' => true,
                 'image' => $card->image
-            ]);
+            ])->header('Content-Type', 'application/json');
         } catch (\Exception $e) {
+            \Log::error('Card image fetch error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'error' => $e->getMessage()
-            ], 404);
+            ], 404)->header('Content-Type', 'application/json');
         }
     }
 }
