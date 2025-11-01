@@ -30,34 +30,56 @@ class ProductController extends Controller
                 ]);
             }
 
-            // EXCLUDE profile_image from userProfile to avoid payload too large
-            $userProfile = $user->profile;
-            if ($userProfile) {
-                $userProfile->makeHidden('profile_image');
+            // Get data with timeout protection
+            $userProfile = null;
+            $userLinks = [];
+            $products = [];
+            $cards = [];
+
+            try {
+                // EXCLUDE profile_image from userProfile to avoid payload too large
+                $userProfile = $user->profile;
+                if ($userProfile) {
+                    $userProfile->makeHidden('profile_image');
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Failed to fetch profile: ' . $e->getMessage());
             }
-            
-            // Only select necessary fields from links
-            $userLinks = $user->links()
-                             ->select('id', 'user_id', 'title', 'url', 'order')
-                             ->orderBy('order')
+
+            try {
+                // Only select necessary fields from links
+                $userLinks = $user->links()
+                                 ->select('id', 'user_id', 'title', 'url', 'order')
+                                 ->orderBy('order')
+                                 ->get();
+            } catch (\Exception $e) {
+                \Log::warning('Failed to fetch links: ' . $e->getMessage());
+            }
+
+            try {
+                // EXCLUDE image from home view to avoid payload too large error
+                $products = $user->products()
+                                ->where('status', 'active')
+                                ->select('id', 'user_id', 'card_id', 'title', 'description', 'link_shopee', 'link_tiktok', 'price', 'range', 'stock', 'status', 'specifications', 'created_at', 'updated_at')
+                                ->get();
+            } catch (\Exception $e) {
+                \Log::warning('Failed to fetch products: ' . $e->getMessage());
+            }
+
+            try {
+                // Eager load products untuk setiap card
+                // EXCLUDE image from cards to reduce payload
+                $cards = $user->cards()
+                             ->where('status', 'active')
+                             ->select('id', 'user_id', 'title', 'category', 'slug', 'status', 'created_at', 'updated_at')
+                             ->with(['products' => function($query) {
+                                 $query->where('status', '!=', 'inactive')
+                                       ->select('id', 'user_id', 'card_id', 'title', 'description', 'link_shopee', 'link_tiktok', 'price', 'range', 'stock', 'status', 'specifications', 'created_at', 'updated_at');
+                             }])
                              ->get();
-            
-            // EXCLUDE image from home view to avoid payload too large error
-            $products = $user->products()
-                            ->where('status', 'active')
-                            ->select('id', 'user_id', 'card_id', 'title', 'description', 'link_shopee', 'link_tiktok', 'price', 'range', 'stock', 'status', 'specifications', 'created_at', 'updated_at')
-                            ->get();
-            
-            // Eager load products untuk setiap card
-            // EXCLUDE image from cards to reduce payload
-            $cards = $user->cards()
-                         ->where('status', 'active')
-                         ->select('id', 'user_id', 'title', 'category', 'slug', 'status', 'created_at', 'updated_at')
-                         ->with(['products' => function($query) {
-                             $query->where('status', '!=', 'inactive')
-                                   ->select('id', 'user_id', 'card_id', 'title', 'description', 'link_shopee', 'link_tiktok', 'price', 'range', 'stock', 'status', 'specifications', 'created_at', 'updated_at');
-                         }])
-                         ->get();
+            } catch (\Exception $e) {
+                \Log::warning('Failed to fetch cards: ' . $e->getMessage());
+            }
             
             return view('zyashp', [
                 'userProfile' => $userProfile,
