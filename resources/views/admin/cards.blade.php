@@ -441,11 +441,9 @@
       }
 
       tbody.innerHTML = allCards.map(card => {
-        // Handle image path - check multiple possible fields
+        // Handle image path - check if base64 data URL
         let imageSrc = '';
-        if (card.image_url) {
-          imageSrc = card.image_url;  // Already a data URL or full URL
-        } else if (card.image) {
+        if (card.image) {
           // Check if it's already a data URL (base64)
           if (card.image.startsWith('data:')) {
             imageSrc = card.image;  // Use as-is
@@ -459,7 +457,6 @@
           id: card.id,
           title: card.title,
           image: card.image,
-          image_url: card.image_url,
           finalSrc: imageSrc
         });
         
