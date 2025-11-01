@@ -78,15 +78,24 @@ class ProductAdminController extends Controller
                 'request_data_keys' => array_keys($request->all())
             ]);
             
-            $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'card_id' => 'required|exists:cards,id',
-            'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
-            'status' => 'required|in:active,inactive,coming_soon',
-            'link_shopee' => 'nullable|url',
-            'link_tiktok' => 'nullable|url',
-        ]);            // Validasi: Minimal salah satu link harus diisi
+            // Validate image only if it's a file upload (not base64 string)
+            $rules = [
+                'title' => 'required|string|max:255',
+                'card_id' => 'required|exists:cards,id',
+                'description' => 'nullable|string',
+                'status' => 'required|in:active,inactive,coming_soon',
+                'link_shopee' => 'nullable|url',
+                'link_tiktok' => 'nullable|url',
+            ];
+            
+            // Only validate image as file if it's actually a file upload
+            if ($request->hasFile('image')) {
+                $rules['image'] = 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240';
+            }
+            
+            $validated = $request->validate($rules);
+            
+            // Validasi: Minimal salah satu link harus diisi
             if (empty($validated['link_shopee']) && empty($validated['link_tiktok'])) {
                 return response()->json([
                     'error' => 'Minimal salah satu link (Shopee atau Tiktok) harus diisi!'
@@ -274,15 +283,22 @@ class ProductAdminController extends Controller
             'content_type' => $request->header('Content-Type')
         ]);
 
-        $validated = $request->validate([
+        // Validate image only if it's a file upload (not base64 string)
+        $rules = [
             'title' => 'required|string|max:255',
             'card_id' => 'required|exists:cards,id',
             'description' => 'nullable|string',
-            'image' => 'nullable|file|max:10240', // Simplified validation - just check if it's a file
             'status' => 'required|in:active,inactive,coming_soon',
             'link_shopee' => 'nullable|url',
             'link_tiktok' => 'nullable|url',
-        ]);
+        ];
+        
+        // Only validate image as file if it's actually a file upload
+        if ($request->hasFile('image')) {
+            $rules['image'] = 'nullable|file|max:10240';
+        }
+        
+        $validated = $request->validate($rules);
 
         // Validasi: Minimal salah satu link harus diisi
         if (empty($validated['link_shopee']) && empty($validated['link_tiktok'])) {
