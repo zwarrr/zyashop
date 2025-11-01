@@ -21,6 +21,8 @@ class ProductController extends Controller
             // Get user
             $user = auth()->check() ? auth()->user() : User::first();
             
+            \Log::info('DEBUG: User ID = ' . ($user ? $user->id : 'null'));
+            
             if (!$user) {
                 return view('zyashp', [
                     'userProfile' => null,
@@ -42,8 +44,9 @@ class ProductController extends Controller
                 if ($userProfile) {
                     $userProfile->makeHidden('profile_image');
                 }
+                \Log::info('DEBUG: Profile loaded: ' . ($userProfile ? 'yes' : 'no'));
             } catch (\Throwable $e) {
-                //
+                \Log::error('ERROR fetching profile: ' . $e->getMessage());
             }
 
             // 2. Get links
@@ -51,8 +54,9 @@ class ProductController extends Controller
                 $userLinks = $user->links()
                                  ->orderBy('order')
                                  ->get(['id', 'user_id', 'title', 'url', 'order']);
+                \Log::info('DEBUG: Links count = ' . $userLinks->count());
             } catch (\Throwable $e) {
-                //
+                \Log::error('ERROR fetching links: ' . $e->getMessage());
             }
 
             // 3. Get products  
@@ -60,22 +64,29 @@ class ProductController extends Controller
                 $products = $user->products()
                                 ->where('status', 'active')
                                 ->get(['id', 'user_id', 'card_id', 'title', 'description', 'link_shopee', 'link_tiktok', 'price', 'range', 'stock', 'status', 'specifications', 'created_at', 'updated_at']);
+                \Log::info('DEBUG: Active products count = ' . $products->count());
             } catch (\Throwable $e) {
-                //
+                \Log::error('ERROR fetching products: ' . $e->getMessage());
             }
 
             // 4. Get cards with products
             try {
+                $allCards = $user->cards()->get();
+                \Log::info('DEBUG: Total cards = ' . $allCards->count());
+                \Log::info('DEBUG: Active cards = ' . $user->cards()->where('status', 'active')->count());
+                
                 $cards = $user->cards()
                              ->where('status', 'active')
                              ->with('products')
                              ->get(['id', 'user_id', 'title', 'category', 'slug', 'status', 'created_at', 'updated_at']);
+                \Log::info('DEBUG: Final cards loaded = ' . $cards->count());
             } catch (\Throwable $e) {
-                //
+                \Log::error('ERROR fetching cards: ' . $e->getMessage());
             }
             
             return view('zyashp', compact('userProfile', 'userLinks', 'products', 'cards'));
         } catch (\Throwable $e) {
+            \Log::error('FATAL ERROR in home: ' . $e->getMessage());
             return view('zyashp', [
                 'userProfile' => null,
                 'userLinks' => collect(),
