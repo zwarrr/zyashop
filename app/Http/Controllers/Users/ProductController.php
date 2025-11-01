@@ -66,14 +66,13 @@ class ProductController extends Controller
                 // Silently fail
             }
 
-            // Fetch cards - NO nested with() to avoid recursive query
+            // Fetch cards with minimal products data
             try {
                 $cards = $user->cards()
                              ->where('status', 'active')
                              ->select('id', 'user_id', 'title', 'category', 'slug', 'status', 'created_at', 'updated_at')
                              ->with(['products' => function($q) {
-                                 $q->where('status', '!=', 'inactive')
-                                   ->select('id', 'user_id', 'card_id', 'title');
+                                 $q->select('id', 'card_id', 'status');
                              }])
                              ->limit(20)
                              ->get();
