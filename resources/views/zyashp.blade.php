@@ -450,6 +450,19 @@
       initializeLinksModal();
       initializeMoreLinks();
       
+      // Lazy load card images via AJAX
+      document.querySelectorAll('.card-img[data-card-id]').forEach(img => {
+        const cardId = img.getAttribute('data-card-id');
+        fetch(`/api/card/${cardId}/image`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.success && data.image) {
+              img.src = data.image;
+            }
+          })
+          .catch(err => console.error('Failed to load image for card ' + cardId, err));
+      });
+      
       // Close modal when clicking outside
       document.addEventListener('click', (e) => {
         const modal = document.getElementById('linksModal');

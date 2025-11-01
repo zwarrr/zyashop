@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Users\ProductController;
+use App\Http\Controllers\Users\CardController;
 use App\Http\Controllers\Admin\ProductAdminController;
 use App\Http\Controllers\Admin\KategoriAdminController;
 use App\Http\Controllers\Admin\CardAdminController;
@@ -14,6 +15,7 @@ Route::get('/product', [ProductController::class, 'index'])->name('product');
 Route::get('/cards-by-category/{category}', [ProductController::class, 'showCards'])->name('cards.show');
 Route::get('/card/{cardId}/products', [ProductController::class, 'showProductsByCard'])->name('card.products');
 Route::get('/products/{type}', [ProductController::class, 'showProductsByType'])->name('products.type');
+Route::get('/api/card/{id}/image', [CardController::class, 'getImage'])->name('card.image');
 
 // Auth Routes
 Route::middleware('guest')->group(function () {
