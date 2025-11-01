@@ -18,82 +18,77 @@ class ProductController extends Controller
     public function home()
     {
         try {
-            // Ambil user pertama atau user yang login
-            $user = auth()->user() ?? User::first();
+            // Default empty data
+            $userProfile = null;
+            $userLinks = collect();
+            $products = collect();
+            $cards = collect();
+
+            // Get user - try auth first, fallback to first user
+            $user = auth()->check() ? auth()->user() : null;
+            if (!$user) {
+                $user = User::where('id', '>', 0)->first();
+            }
             
             if (!$user) {
-                return view('zyashp', [
-                    'userProfile' => null,
-                    'userLinks' => [],
-                    'products' => [],
-                    'cards' => []
-                ]);
+                return view('zyashp', compact('userProfile', 'userLinks', 'products', 'cards'));
             }
 
-            // Get data with timeout protection
-            $userProfile = null;
-            $userLinks = [];
-            $products = [];
-            $cards = [];
-
+            // Fetch profile with timeout protection
             try {
-                // EXCLUDE profile_image from userProfile to avoid payload too large
                 $userProfile = $user->profile;
                 if ($userProfile) {
                     $userProfile->makeHidden('profile_image');
                 }
-            } catch (\Exception $e) {
-                \Log::warning('Failed to fetch profile: ' . $e->getMessage());
+            } catch (\Throwable $e) {
+                // Silently fail - show page without profile
             }
 
+            // Fetch links
             try {
-                // Only select necessary fields from links
                 $userLinks = $user->links()
                                  ->select('id', 'user_id', 'title', 'url', 'order')
                                  ->orderBy('order')
+                                 ->limit(20)
                                  ->get();
-            } catch (\Exception $e) {
-                \Log::warning('Failed to fetch links: ' . $e->getMessage());
+            } catch (\Throwable $e) {
+                // Silently fail
             }
 
+            // Fetch products
             try {
-                // EXCLUDE image from home view to avoid payload too large error
                 $products = $user->products()
                                 ->where('status', 'active')
                                 ->select('id', 'user_id', 'card_id', 'title', 'description', 'link_shopee', 'link_tiktok', 'price', 'range', 'stock', 'status', 'specifications', 'created_at', 'updated_at')
+                                ->limit(50)
                                 ->get();
-            } catch (\Exception $e) {
-                \Log::warning('Failed to fetch products: ' . $e->getMessage());
+            } catch (\Throwable $e) {
+                // Silently fail
             }
 
+            // Fetch cards - NO nested with() to avoid recursive query
             try {
-                // Eager load products untuk setiap card
-                // EXCLUDE image from cards to reduce payload
                 $cards = $user->cards()
                              ->where('status', 'active')
                              ->select('id', 'user_id', 'title', 'category', 'slug', 'status', 'created_at', 'updated_at')
-                             ->with(['products' => function($query) {
-                                 $query->where('status', '!=', 'inactive')
-                                       ->select('id', 'user_id', 'card_id', 'title', 'description', 'link_shopee', 'link_tiktok', 'price', 'range', 'stock', 'status', 'specifications', 'created_at', 'updated_at');
+                             ->with(['products' => function($q) {
+                                 $q->where('status', '!=', 'inactive')
+                                   ->select('id', 'user_id', 'card_id', 'title');
                              }])
+                             ->limit(20)
                              ->get();
-            } catch (\Exception $e) {
-                \Log::warning('Failed to fetch cards: ' . $e->getMessage());
+            } catch (\Throwable $e) {
+                // Silently fail
             }
             
-            return view('zyashp', [
-                'userProfile' => $userProfile,
-                'userLinks' => $userLinks,
-                'products' => $products,
-                'cards' => $cards
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('Home page error: ' . $e->getMessage());
+            return view('zyashp', compact('userProfile', 'userLinks', 'products', 'cards'));
+        } catch (\Throwable $e) {
+            // Final fallback - return empty page
             return view('zyashp', [
                 'userProfile' => null,
-                'userLinks' => [],
-                'products' => [],
-                'cards' => []
+                'userLinks' => collect(),
+                'products' => collect(),
+                'cards' => collect()
             ]);
         }
     }

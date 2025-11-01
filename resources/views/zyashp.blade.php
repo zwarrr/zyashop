@@ -217,10 +217,10 @@
       @foreach($cards as $card)
       <!-- Dynamic Card from Database -->
       <a href="javascript:void(0)" 
-         onclick="handleCardClick({{ $card->id }}, '{{ $card->title }}', {{ $card->products()->where('status', '!=', 'inactive')->count() }})" 
+         onclick="handleCardClick({{ $card->id }}, '{{ $card->title }}', {{ isset($card->products) && count($card->products ?? []) > 0 ? 1 : 0 }})" 
          class="card-link relative rounded-lg overflow-hidden group cursor-pointer" 
          data-card-id="{{ $card->id }}" 
-         data-has-products="{{ $card->products()->where('status', '!=', 'inactive')->count() > 0 ? 'true' : 'false' }}"
+         data-has-products="{{ isset($card->products) && count($card->products ?? []) > 0 ? 'true' : 'false' }}"
          title="{{ $card->title }}">
         <!-- Placeholder while loading image -->
         <img src="https://placehold.co/1080x1080?text={{ urlencode($card->title) }}" 
