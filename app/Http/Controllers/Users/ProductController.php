@@ -17,10 +17,56 @@ class ProductController extends Controller
      */
     public function home()
     {
-        // Ambil user pertama atau user yang login
-        $user = auth()->user() ?? User::first();
-        
-        if (!$user) {
+        try {
+            // Ambil user pertama atau user yang login
+            $user = auth()->user() ?? User::first();
+            
+            if (!$user) {
+                return view('zyashp', [
+                    'userProfile' => null,
+                    'userLinks' => [],
+                    'products' => [],
+                    'cards' => []
+                ]);
+            }
+
+            // EXCLUDE profile_image from userProfile to avoid payload too large
+            $userProfile = $user->profile;
+            if ($userProfile) {
+                $userProfile->makeHidden('profile_image');
+            }
+            
+            // Only select necessary fields from links
+            $userLinks = $user->links()
+                             ->select('id', 'user_id', 'title', 'url', 'order')
+                             ->orderBy('order')
+                             ->get();
+            
+            // EXCLUDE image from home view to avoid payload too large error
+            $products = $user->products()
+                            ->where('status', 'active')
+                            ->select('id', 'user_id', 'card_id', 'title', 'description', 'link_shopee', 'link_tiktok', 'price', 'range', 'stock', 'status', 'specifications', 'created_at', 'updated_at')
+                            ->get();
+            
+            // Eager load products untuk setiap card
+            // EXCLUDE image from cards to reduce payload
+            $cards = $user->cards()
+                         ->where('status', 'active')
+                         ->select('id', 'user_id', 'title', 'category', 'slug', 'status', 'created_at', 'updated_at')
+                         ->with(['products' => function($query) {
+                             $query->where('status', '!=', 'inactive')
+                                   ->select('id', 'user_id', 'card_id', 'title', 'description', 'link_shopee', 'link_tiktok', 'price', 'range', 'stock', 'status', 'specifications', 'created_at', 'updated_at');
+                         }])
+                         ->get();
+            
+            return view('zyashp', [
+                'userProfile' => $userProfile,
+                'userLinks' => $userLinks,
+                'products' => $products,
+                'cards' => $cards
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Home page error: ' . $e->getMessage());
             return view('zyashp', [
                 'userProfile' => null,
                 'userLinks' => [],
@@ -28,46 +74,6 @@ class ProductController extends Controller
                 'cards' => []
             ]);
         }
-
-        // EXCLUDE profile_image from userProfile to avoid payload too large
-        $userProfile = $user->profile;
-        if ($userProfile) {
-            $userProfile->makeHidden('profile_image');
-        }
-        
-        // Only select necessary fields from links
-        $userLinks = $user->links()
-                         ->select('id', 'user_id', 'title', 'url', 'order')
-                         ->orderBy('order')
-                         ->get();
-        
-        // EXCLUDE image from home view to avoid payload too large error
-        // Images will be loaded lazily in Blade template if needed
-        $products = $user->products()
-                        ->where('status', 'active')
-                        ->select('id', 'user_id', 'card_id', 'title', 'description', 'link_shopee', 'link_tiktok', 'price', 'range', 'stock', 'status', 'specifications', 'created_at', 'updated_at')
-                        ->get();
-        
-        // Eager load products untuk setiap card (untuk cek jumlah products)
-        // EXCLUDE image from cards to reduce payload
-        $cards = $user->cards()
-                     ->where('status', 'active')
-                     ->select('id', 'user_id', 'title', 'category', 'slug', 'status', 'created_at', 'updated_at')
-                     ->with(['products' => function($query) {
-                         $query->where('status', '!=', 'inactive')
-                               ->select('id', 'user_id', 'card_id', 'title', 'description', 'link_shopee', 'link_tiktok', 'price', 'range', 'stock', 'status', 'specifications', 'created_at', 'updated_at');
-                     }])
-                     ->get();
-        
-        // Load card images separately via accessor (not included in response)
-        // They will be loaded via background fetch in Blade
-        
-        return view('zyashp', [
-            'userProfile' => $userProfile,
-            'userLinks' => $userLinks,
-            'products' => $products,
-            'cards' => $cards
-        ]);
     }
 
     /**
