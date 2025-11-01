@@ -453,7 +453,7 @@
       // Lazy load card images via AJAX
       document.querySelectorAll('.card-img[data-card-id]').forEach(img => {
         const cardId = img.getAttribute('data-card-id');
-        fetch(`/api/card/${cardId}/image`)
+        fetch(`/card-image/${cardId}`)
           .then(res => res.json())
           .then(data => {
             if (data.success && data.image) {
