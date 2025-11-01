@@ -75,10 +75,11 @@ class ProductController extends Controller
                 \Log::info('DEBUG: Total cards = ' . $allCards->count());
                 \Log::info('DEBUG: Active cards = ' . $user->cards()->where('status', 'active')->count());
                 
+                // EXCLUDE image to avoid payload too large (6MB limit on Vercel)
                 $cards = $user->cards()
                              ->where('status', 'active')
                              ->with('products')
-                             ->get(['id', 'user_id', 'title', 'category', 'slug', 'image', 'status', 'created_at', 'updated_at']);
+                             ->get(['id', 'user_id', 'title', 'category', 'slug', 'status', 'created_at', 'updated_at']);
                 \Log::info('DEBUG: Final cards loaded = ' . $cards->count());
             } catch (\Throwable $e) {
                 \Log::error('ERROR fetching cards: ' . $e->getMessage());
