@@ -59,7 +59,7 @@ class ProductController extends Controller
                 \Log::error('ERROR fetching links: ' . $e->getMessage());
             }
 
-            // 3. Get products  
+            // 3. Get products (EXCLUDE image to avoid payload too large)
             try {
                 $products = $user->products()
                                 ->where('status', 'active')
@@ -67,6 +67,7 @@ class ProductController extends Controller
                 \Log::info('DEBUG: Active products count = ' . $products->count());
             } catch (\Throwable $e) {
                 \Log::error('ERROR fetching products: ' . $e->getMessage());
+                $products = collect();
             }
 
             // 4. Get cards with products
@@ -75,14 +76,17 @@ class ProductController extends Controller
                 \Log::info('DEBUG: Total cards = ' . $allCards->count());
                 \Log::info('DEBUG: Active cards = ' . $user->cards()->where('status', 'active')->count());
                 
-                // EXCLUDE image to avoid payload too large (6MB limit on Vercel)
+                // EXCLUDE image from both cards AND products to avoid payload too large (6MB limit on Vercel)
                 $cards = $user->cards()
                              ->where('status', 'active')
-                             ->with('products')
+                             ->with(['products' => function($query) {
+                                 $query->select('id', 'card_id', 'title', 'price', 'status');
+                             }])
                              ->get(['id', 'user_id', 'title', 'category', 'slug', 'status', 'created_at', 'updated_at']);
                 \Log::info('DEBUG: Final cards loaded = ' . $cards->count());
             } catch (\Throwable $e) {
                 \Log::error('ERROR fetching cards: ' . $e->getMessage());
+                $cards = collect();
             }
             
             return view('zyashp', compact('userProfile', 'userLinks', 'products', 'cards'));
