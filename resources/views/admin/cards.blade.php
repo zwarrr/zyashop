@@ -752,16 +752,8 @@
         setTimeout(() => {
           if (response.ok) {
             showAlertModal('Berhasil', data.success || 'Card berhasil disimpan!', 'success', () => {
-              if (cardId) {
-                const index = allCards.findIndex(c => c.id === parseInt(cardId));
-                if (index !== -1) {
-                  allCards[index] = data.card;
-                }
-              } else {
-                allCards.push(data.card);
-              }
-              
-              renderCardsTable();
+              // Reload page to refresh data instead of pushing incomplete card object
+              window.location.reload();
             });
           } else {
             console.error('❌ SERVER ERROR:', data.error);
