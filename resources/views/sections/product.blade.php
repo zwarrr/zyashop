@@ -41,7 +41,9 @@
     <!-- Include Header Component -->
     @include('partials.header', [
       'pageTitle' => $pageTitle ?? ($cardTitle ?? 'Products'),
-      'productType' => $productType ?? null
+      'productType' => $productType ?? null,
+      'cardId' => $cardId ?? null,
+      'card' => $card ?? null
     ])
 
 

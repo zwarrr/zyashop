@@ -14,7 +14,7 @@ Route::get('/', [ProductController::class, 'home'])->name('home');
 Route::get('/product', [ProductController::class, 'index'])->name('product');
 Route::get('/cards-by-category/{category}', [ProductController::class, 'showCards'])->name('cards.show');
 Route::get('/card/{cardId}/products', [ProductController::class, 'showProductsByCard'])->name('card.products');
-Route::get('/products/{type}', [ProductController::class, 'showProductsByType'])->name('products.type');
+Route::get('/card/{cardId}/products/{type}', [ProductController::class, 'showProductsByType'])->name('products.type');
 
 // API endpoint for lazy loading card images (must be BEFORE /card/{cardId} to avoid conflict)
 Route::get('/card-image/{id}', [CardController::class, 'getImage'])->name('card.image');

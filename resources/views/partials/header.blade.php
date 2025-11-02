@@ -24,12 +24,12 @@
   <div id="categoryTabs" class="flex justify-center gap-6 pb-4 border-b border-gray-200">
     <button class="category-tab-btn {{ !isset($productType) || $productType === 'shopee' ? 'active text-red-600 border-red-600' : 'text-gray-600 border-transparent' }} font-semibold text-sm whitespace-nowrap pb-2 border-b-2 hover:text-black transition-colors" 
             data-type="shopee" 
-            onclick="window.location.href='{{ route('products.type', 'shopee') }}'">
+            onclick="window.location.href='{{ route('products.type', ['cardId' => $cardId ?? $card->id ?? '', 'type' => 'shopee']) }}'">
       Shopee
     </button>
     <button class="category-tab-btn {{ isset($productType) && $productType === 'tiktok' ? 'active text-red-600 border-red-600' : 'text-gray-600 border-transparent' }} font-semibold text-sm whitespace-nowrap pb-2 border-b-2 hover:text-black transition-colors" 
             data-type="tiktok"
-            onclick="window.location.href='{{ route('products.type', 'tiktok') }}'">
+            onclick="window.location.href='{{ route('products.type', ['cardId' => $cardId ?? $card->id ?? '', 'type' => 'tiktok']) }}'">
       Tiktok Shop
     </button>
   </div>

@@ -207,14 +207,16 @@ class ProductController extends Controller
             'isCards' => false,  // Ini adalah products, bukan cards
             'cardTitle' => $card->title,  // Kirim judul card untuk header
             'hasNoProducts' => $hasNoProducts,  // Flag untuk menampilkan modal
-            'cardInfo' => $card  // Kirim info card untuk modal
+            'cardInfo' => $card,  // Kirim info card untuk modal
+            'cardId' => $cardId,  // Pass cardId untuk header navigation
+            'card' => $card  // Pass card object
         ]);
     }
 
     /**
      * Tampilkan products berdasarkan type (shopee/tiktok)
      */
-    public function showProductsByType($type)
+    public function showProductsByType($cardId, $type)
     {
         $user = auth()->user() ?? User::first();
         
@@ -227,10 +229,18 @@ class ProductController extends Controller
             return redirect()->route('home');
         }
 
-        // Filter products berdasarkan link yang ada dan user
+        // Get card info
+        $card = $user->cards()->where('id', $cardId)->first();
+        
+        if (!$card) {
+            return redirect()->route('home');
+        }
+
+        // Filter products berdasarkan card_id dan link yang ada
         $linkField = $type === 'shopee' ? 'link_shopee' : 'link_tiktok';
         
         $products = $user->products()
+                          ->where('card_id', $cardId)
                           ->where('status', '!=', 'inactive')
                           ->whereNotNull($linkField)
                           ->where($linkField, '!=', '')
@@ -248,9 +258,10 @@ class ProductController extends Controller
         return view('sections.product', [
             'products' => $products,
             'userProfile' => $userProfile,
-            'isCards' => false,
-            'productType' => $type,  // shopee atau tiktok
-            'pageTitle' => $type === 'shopee' ? 'Shopee Products' : 'Tiktok Shop Products'
+            'pageTitle' => $card->title . ' - ' . ucfirst($type),
+            'productType' => $type,
+            'cardId' => $cardId,
+            'card' => $card,
         ]);
     }
 }
