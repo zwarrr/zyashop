@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-white">
+<html lang="en" class="h-full">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,14 +11,30 @@
   <!-- Poppins Font -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body {
+    html, body {
       font-family: 'Poppins', sans-serif;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
       background-image: url('{{ asset('img/bg.png') }}');
       background-size: cover;
       background-position: center;
       background-attachment: fixed;
       background-repeat: no-repeat;
+      min-height: 100vh;
+      width: 100%;
     }
+    
+    @media (max-width: 768px) {
+      body {
+        background-attachment: scroll;
+        background-size: cover;
+      }
+    }
+    
     .product-card {
       transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
@@ -38,10 +54,10 @@
     }
   </style>
 </head>
-<body class="text-black">
+<body class="text-black min-h-screen">
 
   <!-- Main Wrapper -->
-  <main class="max-w-full sm:max-w-2xl md:max-w-4xl mx-auto px-3 sm:px-4">
+  <main class="max-w-full sm:max-w-2xl md:max-w-4xl mx-auto px-3 sm:px-4 min-h-screen">
 
     <!-- Include Header Component -->
     @include('partials.header', [
