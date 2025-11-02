@@ -55,7 +55,8 @@
     .sticky-header {
       position: sticky;
       top: 0;
-      background-color: white;
+      background-color: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
       z-index: 10;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     }

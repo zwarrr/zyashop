@@ -1,7 +1,7 @@
 <!-- Header & Category Tabs Component -->
-<div id="headerContainer" class="sticky-header pb-4 pt-4">
+<div id="headerContainer" class="sticky-header pb-4 pt-4 -mx-3 sm:-mx-4 px-3 sm:px-4">
   <!-- Header with Back & Share Button -->
-  <div class="flex items-center justify-between mb-4 px-3 sm:px-4">
+  <div class="flex items-center justify-between mb-4">
     <div class="flex items-center gap-2">
       <a href="/" class="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-all duration-300 cursor-pointer" title="Back to home">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -16,7 +16,7 @@
   </div>
 
   <!-- Search Bar -->
-  <div class="mb-4 px-3 sm:px-4">
+  <div class="mb-4">
     <input type="text" id="searchProducts" placeholder="Cari Produk" class="w-full px-4 py-3 bg-gray-200 rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black transition-all">
   </div>
 
