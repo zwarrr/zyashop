@@ -44,10 +44,11 @@
     
     .product-card {
       transition: transform 0.3s ease, box-shadow 0.3s ease;
+      background-color: white;
     }
     .product-card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
     }
     .product-card:active {
       transform: scale(0.98);
