@@ -165,6 +165,21 @@
     .main-external-link {
       display: inline-flex !important;
     }
+    
+    /* Card hover effect */
+    .card-link {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      background-color: white;
+      border: 1px solid #e5e7eb;
+    }
+    .card-link:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      border-color: #000;
+    }
+    .card-link:active {
+      transform: scale(0.98);
+    }
   </style>
 </head>
 <body class="text-black min-h-screen">
