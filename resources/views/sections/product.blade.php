@@ -13,6 +13,11 @@
   <style>
     body {
       font-family: 'Poppins', sans-serif;
+      background-image: url('{{ asset('img/bg.png') }}');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      background-repeat: no-repeat;
     }
     .product-card {
       transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -33,7 +38,7 @@
     }
   </style>
 </head>
-<body class="bg-white text-black">
+<body class="text-black">
 
   <!-- Main Wrapper -->
   <main class="max-w-full sm:max-w-2xl md:max-w-4xl mx-auto px-3 sm:px-4">

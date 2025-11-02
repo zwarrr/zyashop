@@ -13,6 +13,11 @@
   <style>
     body {
       font-family: 'Poppins', sans-serif;
+      background-image: url('{{ asset('img/bg.png') }}');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      background-repeat: no-repeat;
     }
     
     /* Modal Overlay - Shared by both modals */
@@ -140,7 +145,7 @@
     }
   </style>
 </head>
-<body class="bg-white text-black">
+<body class="text-black">
 
   @include('partials.ajax_loader')
 
