@@ -28,11 +28,18 @@
       width: 100%;
     }
     
-    @media (max-width: 768px) {
-      body {
-        background-attachment: scroll;
-        background-size: cover;
-      }
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('{{ asset('img/bg.png') }}');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      z-index: -1;
     }
     
     /* Modal Overlay - Shared by both modals */
