@@ -81,16 +81,17 @@
         <div class="bg-white rounded-xl p-6 shadow border border-gray-200">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <input type="text" placeholder="Cari produk..." class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black" />
-            <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
-              <option>Semua Kategori</option>
-              <option>Elektronik</option>
-              <option>Fashion</option>
-              <option>Makanan</option>
+            <select id="filterCategory" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
+              <option value="">Semua Kategori</option>
+              @foreach($categories as $category)
+                <option value="{{ $category }}">{{ $category }}</option>
+              @endforeach
             </select>
-            <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
-              <option>Status: Semua</option>
-              <option>Aktif</option>
-              <option>Nonaktif</option>
+            <select id="filterStatus" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
+              <option value="">Status: Semua</option>
+              <option value="active">Aktif</option>
+              <option value="inactive">Nonaktif</option>
+              <option value="coming_soon">Coming Soon</option>
             </select>
           </div>
         </div>
@@ -246,10 +247,15 @@
 
     let currentMode = 'create';
     let allCards = {!! json_encode($cards) !!};
+    let allProducts = []; // Store all products for filtering
 
     // Load products table via AJAX after page load
     document.addEventListener('DOMContentLoaded', function() {
       loadProductsTable();
+      
+      // Add filter event listeners
+      document.getElementById('filterCategory').addEventListener('change', filterProducts);
+      document.getElementById('filterStatus').addEventListener('change', filterProducts);
     });
 
     function loadProductsTable() {
@@ -262,7 +268,10 @@
       .then(data => {
         console.log('Loaded products:', data.products);
         
-        if (!data.products || data.products.length === 0) {
+        // Store all products for filtering
+        allProducts = data.products || [];
+        
+        if (!allProducts || allProducts.length === 0) {
           tableBody.innerHTML = `
             <tr>
               <td colspan="4" class="px-6 py-8 text-center text-gray-500">
@@ -273,7 +282,35 @@
           return;
         }
 
-        tableBody.innerHTML = data.products.map(product => `
+        renderProductsTable(allProducts);
+      })
+      .catch(err => {
+        console.error('Error loading products:', err);
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+              Error loading products. Please refresh the page.
+            </td>
+          </tr>
+        `;
+      });
+    }
+    
+    function renderProductsTable(products) {
+      const tableBody = document.getElementById('productsTableBody');
+      
+      if (!products || products.length === 0) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+              Tidak ada produk yang sesuai dengan filter.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tableBody.innerHTML = products.map(product => `
           <tr class="hover:bg-gray-50 transition duration-200">
             <td class="px-6 py-4">
               <div class="flex items-center gap-3">
@@ -345,18 +382,30 @@
           })
           .catch(err => console.error('Error loading thumbnail for product ' + productId + ':', err));
         });
-      })
-      .catch(err => {
-        console.error('Error loading products:', err);
-        tableBody.innerHTML = `
-          <tr>
-            <td colspan="4" class="px-6 py-8 text-center text-gray-500">
-              Error loading products. Please refresh the page.
-            </td>
-          </tr>
-        `;
-      });
     }
+    
+    function filterProducts() {
+      const categoryFilter = document.getElementById('filterCategory').value;
+      const statusFilter = document.getElementById('filterStatus').value;
+      
+      let filteredProducts = allProducts;
+      
+      // Filter by category (card category)
+      if (categoryFilter) {
+        filteredProducts = filteredProducts.filter(product => {
+          const card = allCards.find(c => c.id === product.card_id);
+          return card && card.category === categoryFilter;
+        });
+      }
+      
+      // Filter by status
+      if (statusFilter) {
+        filteredProducts = filteredProducts.filter(product => product.status === statusFilter);
+      }
+      
+      renderProductsTable(filteredProducts);
+    }
+    
     window.toggleDropdown = function(id) {
       const dropdown = document.getElementById(`dropdown-${id}`);
       document.querySelectorAll('[id^="dropdown-"]').forEach(d => {
